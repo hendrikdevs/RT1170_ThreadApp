@@ -1,0 +1,20 @@
+# The west Manifest for Threadapp.
+
+manifest:
+  defaults: 
+    remote: upstream
+
+  remotes:
+    - name: upstream
+      url-base: https://git.hs-mittweida.de/heisenbl/
+    - name: zephyr-rtos
+      url-base: https://github.com/zephyr-rtos/
+
+  projects: 
+    - name: zepyhr
+      revision: master
+      remote: zephyr-rtos
+
+  self:
+    path: threadapp
+

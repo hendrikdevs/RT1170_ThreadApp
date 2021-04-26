@@ -11,7 +11,7 @@ manifest:
       url-base: https://github.com/zephyrproject-rtos
 
   projects: 
-    - name: zepyhr
+    - name: zephyr
       revision: master
       remote: zephyr-rtos
 

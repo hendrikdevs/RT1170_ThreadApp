@@ -6,7 +6,7 @@ manifest:
 
   remotes:
     - name: upstream
-      url-base: https://git.hs-mittweida.de/heisenbl
+      url-base: git@git.hs-mittweida.de/heisenbl
     - name: zephyr-rtos
       url-base: https://github.com/zephyrproject-rtos
 

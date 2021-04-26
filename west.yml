@@ -4,17 +4,32 @@ manifest:
   defaults: 
     remote: upstream
 
+
   remotes:
     - name: upstream
-      url-base: git@git.hs-mittweida.de/heisenbl
+      url-base: git@git.hs-mittweida.de:heisenbl
+    
     - name: zephyr-rtos
       url-base: https://github.com/zephyrproject-rtos
 
-  projects: 
-    - name: zephyr
-      revision: master
-      remote: zephyr-rtos
 
+  projects: 
+    - name: defines
+      revision: master
+      repo-path: Defines
+    
+    - name: sender
+      revision: master
+      repo-path: Sender
+    
+    - name: zephyr
+      revision: v2.5.0
+      remote: zephyr-rtos
+      import:
+        name-allowlist:
+          - canopennode
+  
+  
   self:
     path: threadapp
 

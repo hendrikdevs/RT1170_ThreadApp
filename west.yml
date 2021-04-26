@@ -8,7 +8,7 @@ manifest:
     - name: upstream
       url-base: https://git.hs-mittweida.de/heisenbl
     - name: zephyr-rtos
-      url-base: https://github.com/zephyr-rtos
+      url-base: https://github.com/zephyrproject-rtos
 
   projects: 
     - name: zepyhr

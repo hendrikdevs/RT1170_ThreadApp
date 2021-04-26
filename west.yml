@@ -25,9 +25,7 @@ manifest:
     - name: zephyr
       revision: v2.5.0
       remote: zephyr-rtos
-      import:
-        name-allowlist:
-          - canopennode
+      import: true
   
   
   self:

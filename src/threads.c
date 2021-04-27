@@ -1,6 +1,5 @@
 #include <zephyr.h>
 #include <sys/printk.h>
-#include <kernel.h>
 #include "threads.h"
 
 #define K_POLL_EVENT_AMOUNT 2

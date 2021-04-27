@@ -7,9 +7,6 @@
 #define COMMUNICATION_THREAD_PRIORITY 2
 #define WORKER_THREAD_PRIORITY -2
 
-#define COMMUNICATION_TO_WORKER_FIFO_NAME "communication_to_worker"
-#define WORKER_TO_COMMUNICATION_FIFO_NAME "worker_to_communication"
-
 /**
  * @brief Identifier of the communication user mode thread.
  * Gets set by threads.c zephyr macro.

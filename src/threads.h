@@ -24,6 +24,18 @@ extern const k_tid_t c1;
 extern const k_tid_t w1;
 
 /**
+ * @brief The identifier for the FIFO from communication to worker thread
+ * 
+ */
+extern struct k_fifo communication_to_worker;
+
+/**
+ * @brief The identifier for the FIFO from worker to communication thread
+ * 
+ */
+extern struct k_fifo worker_to_communication;
+
+/**
  * @brief Used to send incoming can messages from the 
  * communication thread to the worker thread.
  * 

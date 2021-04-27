@@ -3,12 +3,14 @@
 #include <kernel.h>
 #include "threads.h"
 
+#define K_POLL_EVENT_AMOUNT 2
+
 K_FIFO_DEFINE(communication_to_worker);
 K_FIFO_DEFINE(worker_to_communication);
 
 K_SEM_DEFINE(my_sem, 0, 1);
 
-struct k_poll_event events[2] = {
+struct k_poll_event events[K_POLL_EVENT_AMOUNT] = {
     K_POLL_EVENT_STATIC_INITIALIZER(K_POLL_TYPE_SEM_AVAILABLE,
                                     K_POLL_MODE_NOTIFY_ONLY,
                                     &my_sem, 0),
@@ -60,13 +62,13 @@ void communication_thread_entry(void)
     int poll = -1;
     while(true)
     {
-        poll = k_poll(events, 2, K_FOREVER);
+        poll = k_poll(events, K_POLL_EVENT_AMOUNT, K_FOREVER);
         if(poll == 0)  /* Some event is ready */
         {
             if (events[1].state == K_POLL_STATE_FIFO_DATA_AVAILABLE) 
             {
                 /* Send CAN Message to extern */
-                
+
             
             } else if (events[0].state == K_POLL_STATE_SEM_AVAILABLE) 
             {
@@ -78,6 +80,4 @@ void communication_thread_entry(void)
         events[0].state = K_POLL_STATE_NOT_READY;
         events[1].state = K_POLL_STATE_NOT_READY;
     }
-
-
 }

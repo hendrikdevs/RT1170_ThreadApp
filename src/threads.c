@@ -28,21 +28,20 @@ K_THREAD_DEFINE(w1, USER_STACKSIZE, worker_thread_entry, NULL, NULL, NULL,  WORK
 void worker_thread_entry(void) 
 {
     printk("Hello World from Worker Thread! %s\n", CONFIG_BOARD);
+    struct FifoCanMessageItem *item;
 
     while(true) 
     {
         // Wait for new can message from communication thread
-        struct FifoCanMessageItem *item;
         item = k_fifo_get(&communication_to_worker, K_FOREVER);
 
         // Nachricht verabeiten
+        k_msleep(item->message.sleep_in_ms);
 
-
-        // Nachricht an communication Thread senden
-
+        // Nachricht an rückwärts communication thread senden
+        reverse_in_place(item->message.text, 10);
+        k_fifo_put(&worker_to_communication, &item);
     }
-
-
 }
 
 void communication_thread_entry(void) 

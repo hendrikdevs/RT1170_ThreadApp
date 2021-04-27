@@ -11,6 +11,19 @@
 #define WORKER_TO_COMMUNICATION_FIFO_NAME "worker_to_communication"
 
 /**
+ * @brief Identifier of the communication user mode thread.
+ * Gets set by threads.c zephyr macro.
+ * 
+ */
+extern const k_tid_t c1;
+
+/**
+ * @brief Identifier of the worker kernel mode thread.
+ * Gets set by threads.c zephyr macro. 
+ */
+extern const k_tid_t w1;
+
+/**
  * @brief Used to send incoming can messages from the 
  * communication thread to the worker thread.
  * 
@@ -33,8 +46,5 @@ void worker_thread_entry(void);
  *
  */
 void communication_thread_entry(void);
-
-extern const k_tid_t c1;
-extern const k_tid_t w1;
 
 #endif /* THREADS_H */

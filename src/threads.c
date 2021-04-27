@@ -66,7 +66,7 @@ void communication_thread_entry(void)
             if (events[1].state == K_POLL_STATE_FIFO_DATA_AVAILABLE) 
             {
                 /* Send CAN Message to extern */
-                
+
             
             } else if (events[0].state == K_POLL_STATE_SEM_AVAILABLE) 
             {
@@ -78,6 +78,4 @@ void communication_thread_entry(void)
         events[0].state = K_POLL_STATE_NOT_READY;
         events[1].state = K_POLL_STATE_NOT_READY;
     }
-
-
 }

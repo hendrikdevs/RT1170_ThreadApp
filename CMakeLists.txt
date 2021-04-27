@@ -8,4 +8,4 @@ include_directories(../defines)
 
 #add sources, they must come after find_package(Zephyr)
 target_sources(app PRIVATE src/main.c)
-
+target_sources(app PRIVATE src/threads.c)

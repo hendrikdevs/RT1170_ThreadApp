@@ -59,4 +59,12 @@ void worker_thread_entry(void);
  */
 void communication_thread_entry(void);
 
+/**
+ * @brief This reverses a char array in place.
+ * 
+ * @param text The pointer to the char array.
+ * @param length The length of the char array.
+ */
+void reverse_in_place(char* text, const size_t length);
+
 #endif /* THREADS_H */

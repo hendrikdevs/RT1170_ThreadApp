@@ -80,3 +80,17 @@ void communication_thread_entry(void)
         events[1].state = K_POLL_STATE_NOT_READY;
     }
 }
+
+void reverse_in_place(char* text, const size_t length) 
+{
+    char tmp;
+
+    for (int i = 0; i < length / 2; i++) 
+    {
+        tmp = text[i];
+        text[i] = text[length - (i + 1)];
+        text[length - (i + 1)] = tmp;
+    }
+
+    return;
+}

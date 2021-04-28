@@ -3,7 +3,7 @@
 
 #include <can/message.h>
 
-#define USER_STACKSIZE 2048
+#define USER_STACKSIZE 512
 #define COMMUNICATION_THREAD_PRIORITY 2
 #define WORKER_THREAD_PRIORITY -2
 

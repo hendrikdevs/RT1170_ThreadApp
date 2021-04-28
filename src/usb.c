@@ -1,4 +1,5 @@
 #include "usb.h"
+#include "threads.h"
 #include <stdio.h>
 #include <string.h>
 #include <device.h>
@@ -14,6 +15,11 @@ LOG_MODULE_REGISTER(cdc_acm_echo, LOG_LEVEL_INF);
 uint8_t ring_buffer[RING_BUF_SIZE];
 
 struct ring_buf ringbuf;
+
+union Serialize {
+	struct Message msg;
+	char buffer[sizeof(struct Message)];
+};
 
 static void interrupt_handler(const struct device *dev, void *user_data)
 {
@@ -54,6 +60,26 @@ static void interrupt_handler(const struct device *dev, void *user_data)
 			}
 
 			LOG_DBG("ringbuf -> tty fifo %d bytes\n", send_len);
+		}
+	}
+}
+
+static void write_to_fifo(const struct device* dev, void* user_data) {
+	ARG_UNUSED(user_data);
+
+	/* recive data into buffer after interrupt */
+	while (uart_irq_update(dev) && uart_irq_is_pending(dev)) {
+		if(uart_irq_rx_ready(dev)) {
+			int recv_len;
+			union Serialize tx_data;
+
+			recv_len = uart_fifo_read(dev, tx_data.buffer, sizeof(tx_data.buffer));
+
+			/* put into kernel fifo */
+			struct FifoCanMessageItem fifoItem;
+			fifoItem.message = tx_data.msg;
+			k_fifo_put(&extern_to_communication, &tx_data);
+
 		}
 	}
 }
@@ -108,7 +134,7 @@ int init_usb(void){
         LOG_INF("Baudrate detected: %d\n", baudrate);
 	}
 
-    uart_irq_callback_set(dev, interrupt_handler);
+    uart_irq_callback_set(dev, write_to_fifo);
 
     /* enable rx interrupts */
     uart_irq_rx_enable(dev);

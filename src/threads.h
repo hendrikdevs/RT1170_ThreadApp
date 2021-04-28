@@ -52,6 +52,7 @@ struct FifoCanMessageItem
 	void *fifo_reserved;  /* First word reserved for use by FIFO */
 	struct Message message;
 };
+typedef struct FifoCanMessageItem FifoCanMessageItem_t;
 
 /**
  * @brief The main function for a worker thread.

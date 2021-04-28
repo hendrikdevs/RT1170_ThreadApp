@@ -61,7 +61,7 @@ void communication_thread_entry(void)
      * Erst Nachrichten raussenden, bevor neue angenommen werden, 
      * um Memory usage gering zu halten.
     */
-
+    FifoCanMessageItem_t *work_item;
     int poll = -1;
     while(true)
     {

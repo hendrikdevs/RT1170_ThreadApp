@@ -3,9 +3,16 @@
 
 #include <can/message.h>
 
-#define USER_STACKSIZE 2048
+/* Settings for thread creation */
+#define STACKSIZE 2048
 #define COMMUNICATION_THREAD_PRIORITY 2
 #define WORKER_THREAD_PRIORITY -2
+
+/* Defines for the E_POLL Events for the comminication thread */
+#define K_POLL_EVENT_AMOUNT 2
+#define CAN_MESSAGE_INCOMING 0
+#define WORKER_MESSAGE_INCOMING 1
+
 
 /**
  * @brief Identifier of the communication user mode thread.

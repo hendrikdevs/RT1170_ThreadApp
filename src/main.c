@@ -10,6 +10,7 @@ void main(void)
 {
     int ret;
     printk("Hello World from main! %s\n", CONFIG_BOARD);
+
     ret = init_usb();
     if(ret){
         printk("Error while setting up USB\n");

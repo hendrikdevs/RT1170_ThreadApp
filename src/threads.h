@@ -23,6 +23,18 @@
 extern const k_tid_t c1;
 
 /**
+ * @brief 
+ * 
+ */
+extern struct k_heap c1_heap;
+
+/**
+ * @brief 
+ * 
+ */
+extern struct k_msgq can_msgq;
+
+/**
  * @brief Identifier of the worker kernel mode thread.
  * Gets set by threads.c zephyr macro. Used to process
  * the CAN Messages and send back result to the communication

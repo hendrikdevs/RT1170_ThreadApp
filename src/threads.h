@@ -7,16 +7,37 @@
 #define COMMUNICATION_THREAD_PRIORITY 2
 #define WORKER_THREAD_PRIORITY -2
 
+/* Defines for the E_POLL Events for the comminication thread */
+#define K_POLL_EVENT_AMOUNT 2
+#define CAN_MESSAGE_INCOMING 0
+#define WORKER_MESSAGE_INCOMING 1
+
+
 /**
  * @brief Identifier of the communication user mode thread.
- * Gets set by threads.c zephyr macro.
- * 
+ * Gets set by threads.c zephyr macro. Used for receiving and
+ * sending can messages, and forwarding messages to the worker
+ * thread.
  */
 extern const k_tid_t c1;
 
 /**
+ * @brief 
+ * 
+ */
+extern struct k_heap c1_heap;
+
+/**
+ * @brief 
+ * 
+ */
+extern struct k_msgq can_msgq;
+
+/**
  * @brief Identifier of the worker kernel mode thread.
- * Gets set by threads.c zephyr macro. 
+ * Gets set by threads.c zephyr macro. Used to process
+ * the CAN Messages and send back result to the communication
+ * thread.
  */
 extern const k_tid_t w1;
 
@@ -42,6 +63,7 @@ struct FifoCanMessageItem
 	void *fifo_reserved;  /* First word reserved for use by FIFO */
 	struct Message message;
 };
+typedef struct FifoCanMessageItem FifoCanMessageItem_t;
 
 /**
  * @brief The main function for a worker thread.
@@ -57,7 +79,7 @@ void worker_thread_entry(void);
 void communication_thread_entry(void);
 
 /**
- * @brief This reverses a char array in place.
+ * @brief Reverses a char array in place.
  * 
  * @param text The pointer to the char array.
  * @param length The length of the char array.

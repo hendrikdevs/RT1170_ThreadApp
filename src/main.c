@@ -5,7 +5,6 @@
 
 const k_timeout_t thread_timeout = K_FOREVER;
 
-
 void main(void) 
 {
     int ret;
@@ -15,6 +14,7 @@ void main(void)
     if(ret){
         printk("Error while setting up USB\n");
     }
+    k_thread_heap_assign(c1, &c1_heap);
 
 	k_thread_join(w1, thread_timeout);
     k_thread_join(c1, thread_timeout);

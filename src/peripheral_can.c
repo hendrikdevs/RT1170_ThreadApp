@@ -4,6 +4,15 @@
 
 //LOG_MODULE_REGISTER(peripheral_can, CONFIG_PERIPHERAL_CAN_LOG_LEVEL);
 
+const struct zcan_filter can_standard_filter = {
+        .id_type = CAN_STANDARD_IDENTIFIER,
+        .rtr = CAN_DATAFRAME,
+        .id = 0x1,
+        .rtr_mask = 1,
+        .id_mask = CAN_STD_ID_MASK
+};
+
+const struct device *can_dev;
 struct zcan_frame send_frame;
 
 int init_can(void) 

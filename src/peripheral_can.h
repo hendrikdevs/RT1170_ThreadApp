@@ -3,16 +3,6 @@
 
 #define CAN_IDENTIFIER "CAN0"
 
-const struct device *can_dev;
-
-const struct zcan_filter can_standard_filter = {
-        .id_type = CAN_STANDARD_IDENTIFIER,
-        .rtr = CAN_DATAFRAME,
-        .id = 0x1,
-        .rtr_mask = 1,
-        .id_mask = CAN_STD_ID_MASK
-};
-
 /**
  * @brief Initializes the CAN Connection to be able to send and receive
  * messages.

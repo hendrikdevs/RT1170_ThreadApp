@@ -63,11 +63,15 @@ struct FifoMessageItem
 {
 	void *fifo_reserved;  /* First word reserved for use by FIFO */
 	struct Message message;
-	const struct device* dev; /* Device for tagging the origin of the Message */
+	const int peripheral_type; /* Tag for the incoming Bus */
+	const struct device* dev; /* Device which recieved the Message*/
 };
 typedef struct FifoMessageItem FifoMessageItem_t;
 
-
+/** @brief The peripheral_types for the FifoMessageItem struct */
+enum peripheral_types {
+	can, uart
+};
 /**
  * @brief The main function for a worker thread.
  * 
@@ -88,5 +92,13 @@ void communication_thread_entry(void);
  * @param length The length of the char array.
  */
 void reverse_in_place(char* text, const size_t length);
+
+/**
+ * @brief Function to send Messages out over the device which recieved them.
+ * 
+ * @param dev A pointer to the device
+ * @param msgItem A pointer to the Message
+ */
+void send_via_device(const struct device* dev, const struct Message* msg);
 
 #endif /* THREADS_H */

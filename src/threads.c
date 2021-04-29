@@ -44,13 +44,13 @@ void worker_thread_entry(void)
 
     while(true) 
     {
-        // Wait for new can message from communication thread
+        /* Wait for new can message from communication thread */
         item = k_fifo_get(&communication_to_worker, K_FOREVER);
 
-        // Nachricht verabeiten
+        /* Process Message */
         k_msleep(item->message.sleep_in_ms);
 
-        // Nachricht an rückwärts communication thread senden
+        /* Send message backwards to the communication thread */
         reverse_in_place(item->message.text, 10);
         k_fifo_put(&worker_to_communication, &item);
     }

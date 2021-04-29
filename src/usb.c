@@ -64,6 +64,10 @@ static void interrupt_handler(const struct device *dev, void *user_data)
 	}
 }
 
+void send_over_uart(FifoMessageItem_t* fifoItem) {
+	/* pass */
+}
+
 static void write_to_fifo(const struct device* dev, void* user_data) {
 	ARG_UNUSED(user_data);
 
@@ -79,7 +83,8 @@ static void write_to_fifo(const struct device* dev, void* user_data) {
 			struct FifoMessageItem fifoItem;
 			fifoItem.dev = dev;
 			fifoItem.message = tx_data.msg;
-			k_fifo_put(&extern_to_communication, &tx_data);
+			fifoItem.send = send_over_uart;
+			k_fifo_put(&extern_to_communication, &fifoItem);
 
 		}
 	}
@@ -135,7 +140,7 @@ int init_usb(void){
         LOG_INF("Baudrate detected: %d\n", baudrate);
 	}
 
-    uart_irq_callback_set(dev, interrupt_handler);
+    uart_irq_callback_set(dev, write_to_fifo);
 
     /* enable rx interrupts */
     uart_irq_rx_enable(dev);

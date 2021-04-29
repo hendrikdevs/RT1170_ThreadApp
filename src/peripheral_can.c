@@ -1,0 +1,56 @@
+#include <logging/log.h>
+#include "peripheral_can.h"
+#include "threads.h"
+
+//LOG_MODULE_REGISTER(peripheral_can, CONFIG_PERIPHERAL_CAN_LOG_LEVEL);
+
+struct zcan_frame send_frame;
+
+int init_can(void) 
+{
+    int filter_id;
+    can_dev = device_get_binding(CAN_IDENTIFIER);
+
+    filter_id = can_attach_isr(can_dev, receive, NULL, &can_standard_filter);
+    if (filter_id < 0) {
+        //LOG_ERR("Unable to attach can isr [%d]", filter_id);
+    }
+
+    return filter_id;
+}
+
+void receive(struct zcan_frame *frame, void *arg)
+{
+    FifoMessageItem_t work_item = {
+        .dev = can_dev,
+        .send = send,
+
+        .message.priority = frame->data[0],
+        .message.sleep_in_ms = frame->data[1],
+        .message.text = {frame->data[2]}
+    };
+
+    k_fifo_put(&extern_to_communication, &work_item);
+}
+
+void send(FifoMessageItem_t *item)
+{
+    /* Construct CAN send frame */
+    send_frame.dlc = 8;
+    send_frame.data[0] = item->message.priority;
+    send_frame.data[1] = item->message.sleep_in_ms;
+    for(int i = 2; i < 8; i++) 
+    {
+        send_frame.data[i] = item->message.text[i-2];
+    }
+
+    /* Send CAN Message */
+    int ret = -1;
+    ret = can_send(item->dev, &send_frame, K_MSEC(100), NULL, NULL);
+
+    if (ret != CAN_TX_OK) {
+        //LOG_ERR("Sending failed [%d]", ret);
+    }
+
+    return;
+}

@@ -34,8 +34,8 @@ K_THREAD_DEFINE(w1, STACKSIZE, worker_thread_entry, NULL, NULL, NULL,  WORKER_TH
 
 /* Grant communication thread access to needed kernel objects */
 //k_thread_access_grant(c1, &communication_to_worker, &worker_to_communication);
-K_HEAP_DEFINE(c1_heap, 2048);
-K_THREAD_ACCESS_GRANT(c1, &communication_to_worker, &worker_to_communication);
+//K_HEAP_DEFINE(c1_heap, 2048);
+//K_THREAD_ACCESS_GRANT(c1, &communication_to_worker, &worker_to_communication);
 
 void worker_thread_entry(void) 
 {
@@ -44,13 +44,13 @@ void worker_thread_entry(void)
 
     while(true) 
     {
-        // Wait for new can message from communication thread
+        /* Wait for new can message from communication thread */
         item = k_fifo_get(&communication_to_worker, K_FOREVER);
 
-        // Nachricht verabeiten
+        /* Process Message */
         k_msleep(item->message.sleep_in_ms);
 
-        // Nachricht an rückwärts communication thread senden
+        /* Send message backwards to the communication thread */
         reverse_in_place(item->message.text, 10);
         k_fifo_put(&worker_to_communication, &item);
     }
@@ -60,11 +60,7 @@ void communication_thread_entry(void)
 {
     printk("Hello World from Communication Thread! %s\n", CONFIG_BOARD);
 
-    /* Semaphor die Anzeigt wie CAN Nachrichten vom externen Sender
-     * vorhanden sind
-    */
-
-    /* Loop, der die Semaphoren checkt ob neue "Ressourcen" (/Nachrichten)
+    /* Loop, der die FIFOS checkt ob neue "Ressourcen" (/Nachrichten)
      * vorhanden sind, wenn ja diese abarbeiten.
      * Erst Nachrichten raussenden, bevor neue angenommen werden, 
      * um Memory usage gering zu halten.
@@ -84,8 +80,7 @@ void communication_thread_entry(void)
         if (events[WORKER_MESSAGE_INCOMING].state == K_POLL_STATE_FIFO_DATA_AVAILABLE) {
             printk("Got message from the worker thread!\n");
             work_item = k_fifo_get(&worker_to_communication, K_FOREVER);
-            send_via_peripheral(work_item);
-
+            work_item->send(work_item);
         }
 
         /* ISR recieved a message and put it into it FIFO */
@@ -117,26 +112,4 @@ void reverse_in_place(char* text, const size_t length)
     }
 
     return;
-}
-
-void send_via_peripheral(FifoMessageItem_t* msg_item) {
-    /* Serialize Message */
-    union Serialized_Message msg_out;
-    msg_out.message = msg_item->message;
-
-    /* get Send funktion from device struct (how?) */
-    switch (msg_item->peripheral_type)
-    {
-    case can:
-        /* code */
-        printk("Sending via CAN not yet implemented\n");
-        break;
-    
-    case uart:
-        uart_tx(msg_item->dev, msg_out.buffer, sizeof(msg_out), 1000);
-        break;
-    default:
-        break;
-    }
-
 }

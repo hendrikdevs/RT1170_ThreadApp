@@ -76,7 +76,8 @@ static void write_to_fifo(const struct device* dev, void* user_data) {
 			recv_len = uart_fifo_read(dev, tx_data.buffer, sizeof(tx_data.buffer));
 
 			/* put into kernel fifo */
-			struct FifoCanMessageItem fifoItem;
+			struct FifoMessageItem fifoItem;
+			fifoItem.dev = dev;
 			fifoItem.message = tx_data.msg;
 			k_fifo_put(&extern_to_communication, &tx_data);
 
@@ -134,7 +135,7 @@ int init_usb(void){
         LOG_INF("Baudrate detected: %d\n", baudrate);
 	}
 
-    uart_irq_callback_set(dev, write_to_fifo);
+    uart_irq_callback_set(dev, interrupt_handler);
 
     /* enable rx interrupts */
     uart_irq_rx_enable(dev);

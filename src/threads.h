@@ -64,16 +64,12 @@ extern struct k_fifo extern_to_communication;
 struct FifoMessageItem 
 {
 	void *fifo_reserved;  /* First word reserved for use by FIFO */
-	struct Message message;
-	const int peripheral_type; /* Tag for the incoming Bus */
-	const struct device* dev; /* Device which recieved the Message*/
+	message_t message;
+	void (*send)(struct FifoMessageItem *message_item);  /* Function Pointer to the specific send function (uart, can, etc.) */
+	const struct device* dev;  /* Device which recieved the Message*/
 };
 typedef struct FifoMessageItem FifoMessageItem_t;
 
-/** @brief The peripheral_types for the FifoMessageItem struct */
-enum peripheral_types {
-	can, uart
-};
 /**
  * @brief The main function for a worker thread.
  * 

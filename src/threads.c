@@ -84,8 +84,7 @@ void communication_thread_entry(void)
         if (events[WORKER_MESSAGE_INCOMING].state == K_POLL_STATE_FIFO_DATA_AVAILABLE) {
             printk("Got message from the worker thread!\n");
             work_item = k_fifo_get(&worker_to_communication, K_FOREVER);
-            send_via_peripheral(work_item);
-
+            work_item->send(work_item);
         }
 
         /* ISR recieved a message and put it into it FIFO */
@@ -117,26 +116,4 @@ void reverse_in_place(char* text, const size_t length)
     }
 
     return;
-}
-
-void send_via_peripheral(FifoMessageItem_t* msg_item) {
-    /* Serialize Message */
-    union Serialized_Message msg_out;
-    msg_out.message = msg_item->message;
-
-    /* get Send funktion from device struct (how?) */
-    switch (msg_item->peripheral_type)
-    {
-    case can:
-        /* code */
-        printk("Sending via CAN not yet implemented\n");
-        break;
-    
-    case uart:
-        uart_tx(msg_item->dev, msg_out.buffer, sizeof(msg_out), 1000);
-        break;
-    default:
-        break;
-    }
-
 }

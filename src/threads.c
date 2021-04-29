@@ -34,8 +34,8 @@ K_THREAD_DEFINE(w1, STACKSIZE, worker_thread_entry, NULL, NULL, NULL,  WORKER_TH
 
 /* Grant communication thread access to needed kernel objects */
 //k_thread_access_grant(c1, &communication_to_worker, &worker_to_communication);
-K_HEAP_DEFINE(c1_heap, 2048);
-K_THREAD_ACCESS_GRANT(c1, &communication_to_worker, &worker_to_communication);
+//K_HEAP_DEFINE(c1_heap, 2048);
+//K_THREAD_ACCESS_GRANT(c1, &communication_to_worker, &worker_to_communication);
 
 void worker_thread_entry(void) 
 {

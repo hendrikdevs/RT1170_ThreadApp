@@ -7,11 +7,6 @@
 #define COMMUNICATION_THREAD_PRIORITY 2
 #define WORKER_THREAD_PRIORITY -2
 
-/* Defines for the E_POLL Events for the comminication thread */
-#define K_POLL_EVENT_AMOUNT 2
-#define CAN_MESSAGE_INCOMING 0
-#define WORKER_MESSAGE_INCOMING 1
-
 
 /**
  * @brief Identifier of the communication user mode thread.
@@ -54,16 +49,24 @@ extern struct k_fifo communication_to_worker;
 extern struct k_fifo worker_to_communication;
 
 /**
+ * @brief The identifier for the FIFO from worker to communication thread
+ * 
+ */
+extern struct k_fifo extern_to_communication;
+
+/**
  * @brief Used to send incoming can messages from the 
  * communication thread to the worker thread.
  * 
  */
-struct FifoCanMessageItem 
+struct FifoMessageItem 
 {
 	void *fifo_reserved;  /* First word reserved for use by FIFO */
 	struct Message message;
+	const struct device* dev; /* Device for tagging the origin of the Message */
 };
-typedef struct FifoCanMessageItem FifoCanMessageItem_t;
+typedef struct FifoMessageItem FifoMessageItem_t;
+
 
 /**
  * @brief The main function for a worker thread.

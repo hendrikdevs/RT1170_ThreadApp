@@ -60,11 +60,7 @@ void communication_thread_entry(void)
 {
     printk("Hello World from Communication Thread! %s\n", CONFIG_BOARD);
 
-    /* Semaphor die Anzeigt wie CAN Nachrichten vom externen Sender
-     * vorhanden sind
-    */
-
-    /* Loop, der die Semaphoren checkt ob neue "Ressourcen" (/Nachrichten)
+    /* Loop, der die FIFOS checkt ob neue "Ressourcen" (/Nachrichten)
      * vorhanden sind, wenn ja diese abarbeiten.
      * Erst Nachrichten raussenden, bevor neue angenommen werden, 
      * um Memory usage gering zu halten.

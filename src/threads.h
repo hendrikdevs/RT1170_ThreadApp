@@ -2,8 +2,10 @@
 #define THREADS_H
 
 #include <can/message.h>
+#include <zephyr.h>
+#include <kernel/thread.h>
 
-#define USER_STACKSIZE 512
+#define STACKSIZE 512
 #define COMMUNICATION_THREAD_PRIORITY 2
 #define WORKER_THREAD_PRIORITY -2
 
@@ -94,11 +96,10 @@ void communication_thread_entry(void);
 void reverse_in_place(char* text, const size_t length);
 
 /**
- * @brief Function to send Messages out over the device which recieved them.
+ * @brief Send out the Message.
+ * All needed Information is contained in the FifoMessageItem.
  * 
- * @param dev A pointer to the device
- * @param msgItem A pointer to the Message
  */
-void send_via_device(const struct device* dev, const struct Message* msg);
+void send_via_peripheral(FifoMessageItem_t*);
 
 #endif /* THREADS_H */

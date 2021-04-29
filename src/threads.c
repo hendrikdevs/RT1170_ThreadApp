@@ -1,19 +1,25 @@
 #include <zephyr.h>
 #include <sys/printk.h>
 #include "threads.h"
+#include <drivers/uart.h>
 
 /* Thread communication FIFOS */
 K_FIFO_DEFINE(communication_to_worker);
 K_FIFO_DEFINE(worker_to_communication);
 
-/* CAN Communication */
-K_SEM_DEFINE(my_sem, 0, 1);
+/* Peripheral recieved messages */
+K_FIFO_DEFINE(extern_to_communication);
+
+/* Defines for the E_POLL Events for the comminication thread */
+#define K_POLL_EVENT_AMOUNT 2
+#define EXTERN_MESSAGE_INCOMING 0
+#define WORKER_MESSAGE_INCOMING 1
 
 /* Communication thread poll events setup */
 struct k_poll_event events[K_POLL_EVENT_AMOUNT] = {
-    K_POLL_EVENT_STATIC_INITIALIZER(K_POLL_TYPE_MSGQ_DATA_AVAILABLE,
+    K_POLL_EVENT_STATIC_INITIALIZER(K_POLL_TYPE_FIFO_DATA_AVAILABLE,
                                     K_POLL_MODE_NOTIFY_ONLY,
-                                    &can_msgq, 0),
+                                    &extern_to_communication, 0),
     K_POLL_EVENT_STATIC_INITIALIZER(K_POLL_TYPE_FIFO_DATA_AVAILABLE,
                                     K_POLL_MODE_NOTIFY_ONLY,
                                     &worker_to_communication, 0),
@@ -34,7 +40,7 @@ K_THREAD_ACCESS_GRANT(c1, &communication_to_worker, &worker_to_communication);
 void worker_thread_entry(void) 
 {
     printk("Hello World from Worker Thread! %s\n", CONFIG_BOARD);
-    struct FifoCanMessageItem *item;
+    struct FifoMessageItem *item;
 
     while(true) 
     {
@@ -63,36 +69,35 @@ void communication_thread_entry(void)
      * Erst Nachrichten raussenden, bevor neue angenommen werden, 
      * um Memory usage gering zu halten.
     */
-    FifoCanMessageItem_t *work_item;
+    FifoMessageItem_t *work_item;
     int poll = -1;
 
     while(true)
     {
         poll = k_poll(events, K_POLL_EVENT_AMOUNT, K_FOREVER);
 
-        /* Poll again if an error happened */
+        /* Poll again if an error happens */
         if(poll != 0)
             continue;
 
         /* We got atleast one event */
-        if (events[WORKER_MESSAGE_INCOMING].state == K_POLL_STATE_FIFO_DATA_AVAILABLE) 
-            {
-                /* Send CAN Message to extern */
+        if (events[WORKER_MESSAGE_INCOMING].state == K_POLL_STATE_FIFO_DATA_AVAILABLE) {
             printk("Got message from the worker thread!\n");
             work_item = k_fifo_get(&worker_to_communication, K_FOREVER);
-        
+            send_via_peripheral(work_item);
+
         }
-        if (events[CAN_MESSAGE_INCOMING].state == K_POLL_STATE_SEM_AVAILABLE) 
-        {
-            /* Read CAN Message */
-            k_msgq_get(&can_msgq, &rx_frame, K_FOREVER);
 
-            /* Construct FIFO Queue Item */
+        /* ISR recieved a message and put it into it FIFO */
+        if(events[EXTERN_MESSAGE_INCOMING].state == K_POLL_STATE_FIFO_DATA_AVAILABLE) {
+            printk("Recieved message from ISR FIFO\n");
+            work_item = k_fifo_get(&extern_to_communication, K_FOREVER);
 
-            
-                /* Send FIFO Message to worker */
+            /* validate recieved message (TODO) */
 
-            }
+            /* send to worker */
+            k_fifo_put(&communication_to_worker, work_item);
+        }
 
         /* Reset Events for next loop */
         events[0].state = K_POLL_STATE_NOT_READY;
@@ -112,4 +117,26 @@ void reverse_in_place(char* text, const size_t length)
     }
 
     return;
+}
+
+void send_via_peripheral(FifoMessageItem_t* msg_item) {
+    /* Serialize Message */
+    union Serialized_Message msg_out;
+    msg_out.message = msg_item->message;
+
+    /* get Send funktion from device struct (how?) */
+    switch (msg_item->peripheral_type)
+    {
+    case can:
+        /* code */
+        printk("Sending via CAN not yet implemented\n");
+        break;
+    
+    case uart:
+        uart_tx(msg_item->dev, msg_out.buffer, sizeof(msg_out), 1000);
+        break;
+    default:
+        break;
+    }
+
 }

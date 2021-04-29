@@ -1,7 +1,6 @@
 #find Zephyr. THis also loads Zephyr's build system.
 cmake_minimum_required(VERSION 3.13.1)
-#set(BOARD mimxrt1064_evk)
-set(BOARD frdm_kl25z)
+set(BOARD mimxrt1064_evk)
 find_package(Zephyr)
 project(threadapp)
 

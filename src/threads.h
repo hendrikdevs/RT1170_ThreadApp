@@ -1,7 +1,7 @@
 #ifndef THREADS_H
 #define THREADS_H
 
-#include <message.h>
+#include <message/message.h>
 #include <zephyr.h>
 #include <kernel/thread.h>
 

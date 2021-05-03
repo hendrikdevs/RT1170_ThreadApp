@@ -19,16 +19,11 @@
 extern const k_tid_t c1;
 
 /**
- * @brief 
+ * @brief All incoming messages that gets created as
+ * FifoMessageItem_t gets allocated on this heap.
  * 
  */
-extern struct k_heap c1_heap;
-
-/**
- * @brief 
- * 
- */
-extern struct k_msgq can_msgq;
+extern struct k_heap message_item_heap;
 
 /**
  * @brief Identifier of the worker kernel mode thread.

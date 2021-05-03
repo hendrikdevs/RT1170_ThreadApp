@@ -60,8 +60,6 @@ void communication_thread_entry(void)
 
     /* Loop, der die FIFOS checkt ob neue "Ressourcen" (/Nachrichten)
      * vorhanden sind, wenn ja diese abarbeiten.
-     * Erst Nachrichten raussenden, bevor neue angenommen werden, 
-     * um Memory usage gering zu halten.
     */
     FifoMessageItem_t *work_item;
     int poll = -1;

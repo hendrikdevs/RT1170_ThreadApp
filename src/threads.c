@@ -75,7 +75,10 @@ void communication_thread_entry(void)
         if (events[WORKER_MESSAGE_INCOMING].state == K_POLL_STATE_FIFO_DATA_AVAILABLE) {
             printk("Got message from the worker thread!\n");
             work_item = k_fifo_get(&worker_to_communication, K_FOREVER);
+
+            /* Send message and free it from heap */
             work_item->send(work_item);
+            k_heap_free(&message_item_heap, work_item);
         }
 
         /* ISR recieved a message and put it into it FIFO */

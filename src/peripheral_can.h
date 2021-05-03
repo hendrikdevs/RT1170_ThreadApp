@@ -1,7 +1,8 @@
 #include <drivers/can.h>
 #include "threads.h"
 
-#define CAN_IDENTIFIER "CAN0"
+#define CAN_IDENTIFIER "CAN_1"
+#define CAN_UNITIALIZED -1
 
 /**
  * @brief Initializes the CAN Connection to be able to send and receive
@@ -10,7 +11,6 @@
  * @return int 0 on success, -1 on error
  */
 int init_can(void);
-
 
 /**
  * @brief This function gets called by the can isr when a new message

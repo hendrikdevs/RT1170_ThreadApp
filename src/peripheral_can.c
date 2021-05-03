@@ -32,6 +32,13 @@ int init_can(void)
     return filter_id;
 }
 
+/**
+ * @brief This function gets called by the can isr when a new message
+ * is received.
+ * 
+ * @param frame 
+ * @param arg 
+ */
 void receive(struct zcan_frame *frame, void *arg)
 {
     FifoMessageItem_t* work_item = k_heap_alloc(&message_item_heap, sizeof(FifoMessageItem_t), K_NO_WAIT);
@@ -44,6 +51,12 @@ void receive(struct zcan_frame *frame, void *arg)
     k_fifo_put(&extern_to_communication, work_item);
 }
 
+/**
+ * @brief This function gets called when you want to send a message
+ * via CAN.
+ * 
+ * @param item The Message Item that has all the data needed to be send.
+ */
 void send(FifoMessageItem_t *item)
 {
     /* Construct CAN send frame */

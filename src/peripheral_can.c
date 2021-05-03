@@ -13,7 +13,7 @@ const struct zcan_filter can_standard_filter = {
         .id_mask = CAN_STD_ID_MASK
 };
 
-const struct device *can_dev;
+const struct device* can_dev;
 struct zcan_frame send_frame;
 
 int init_can(void) 
@@ -34,16 +34,14 @@ int init_can(void)
 
 void receive(struct zcan_frame *frame, void *arg)
 {
-    FifoMessageItem_t work_item = {
-        .dev = can_dev,
-        .send = send,
+    FifoMessageItem_t* work_item = k_heap_alloc(&message_item_heap, sizeof(FifoMessageItem_t), K_NO_WAIT);
+    work_item->dev = can_dev;
+    work_item->send = send;
+    work_item->message.priority = frame->data[0];
+    work_item->message.sleep_in_ms = frame->data[1];
+    strncpy(frame->data[2], work_item->message.text, sizeof(work_item->message.text));
 
-        .message.priority = frame->data[0],
-        .message.sleep_in_ms = frame->data[1],
-        .message.text = {frame->data[2]}
-    };
-
-    k_fifo_put(&extern_to_communication, &work_item);
+    k_fifo_put(&extern_to_communication, work_item);
 }
 
 void send(FifoMessageItem_t *item)

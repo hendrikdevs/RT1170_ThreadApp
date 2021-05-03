@@ -1,6 +1,7 @@
 #include <logging/log.h>
 #include "peripheral_can.h"
 #include "threads.h"
+#include <device.h>
 
 //LOG_MODULE_REGISTER(peripheral_can, CONFIG_PERIPHERAL_CAN_LOG_LEVEL);
 
@@ -18,7 +19,10 @@ struct zcan_frame send_frame;
 int init_can(void) 
 {
     int filter_id;
+
     can_dev = device_get_binding(CAN_IDENTIFIER);
+    if(can_dev == NULL)
+        return CAN_UNITIALIZED;
 
     filter_id = can_attach_isr(can_dev, receive, NULL, &can_standard_filter);
     if (filter_id < 0) {
@@ -60,6 +64,4 @@ void send(FifoMessageItem_t *item)
     if (ret != CAN_TX_OK) {
         //LOG_ERR("Sending failed [%d]", ret);
     }
-
-    return;
 }

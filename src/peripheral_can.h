@@ -1,7 +1,7 @@
 #include <drivers/can.h>
 #include "threads.h"
 
-#define CAN_IDENTIFIER "CAN_1"
+#define CAN_IDENTIFIER "CAN_2"
 #define CAN_UNITIALIZED -1
 
 /**

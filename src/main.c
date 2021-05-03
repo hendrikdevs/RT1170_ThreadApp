@@ -25,7 +25,4 @@ void main(void)
     if(ret_can == -1) {
         // LOG_ERR();
     }
-
-    /* Give usermode thread a heap to be able to allocate fifo messages */
-    // k_thread_heap_assign(c1, &c1_heap);
 }

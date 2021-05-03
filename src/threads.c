@@ -30,8 +30,8 @@ K_THREAD_DEFINE(c1, STACKSIZE, communication_thread_entry, NULL, NULL, NULL, COM
 K_THREAD_DEFINE(w1, STACKSIZE, worker_thread_entry, NULL, NULL, NULL,  WORKER_THREAD_PRIORITY, 0, 0);
 
 /* Grant communication thread access to needed kernel objects */
-//K_HEAP_DEFINE(c1_heap, 2048);
-K_THREAD_ACCESS_GRANT(c1, &communication_to_worker, &worker_to_communication);
+K_HEAP_DEFINE(message_item_heap, sizeof(FifoMessageItem_t) * 20);
+K_THREAD_ACCESS_GRANT(c1, &communication_to_worker, &worker_to_communication, &message_item_heap);
 
 void worker_thread_entry(void) 
 {

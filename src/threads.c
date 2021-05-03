@@ -49,8 +49,7 @@ void worker_thread_entry(void)
         k_msleep(item->message.sleep_in_ms);
 
         /* Send message backwards to the communication thread */
-        reverse_in_place(item->message.text, 10);
-        k_fifo_put(&worker_to_communication, &item);
+        k_fifo_put(&worker_to_communication, item);
     }
 }
 

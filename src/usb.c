@@ -61,8 +61,6 @@ int init_usb(void){
         return -1;
     }
 
-	ring_buf_init(&ringbuf, sizeof(ring_buffer), ring_buffer);
-
 	LOG_INF("Wait for DTR");
     while(true){
         uart_line_ctrl_get(dev, UART_LINE_CTRL_DTR, &dtr);

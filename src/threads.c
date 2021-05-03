@@ -1,4 +1,5 @@
 #include <zephyr.h>
+#include <kernel.h>
 #include <sys/printk.h>
 #include "threads.h"
 #include <drivers/uart.h>
@@ -25,22 +26,19 @@ struct k_poll_event events[K_POLL_EVENT_AMOUNT] = {
                                     &worker_to_communication, 0),
 };
 
-/* Thread setup */
-K_THREAD_STACK_DEFINE(communication_thread_stack, STACKSIZE);
-K_KERNEL_STACK_DEFINE(worker_thread_stack, STACKSIZE);
-
-K_THREAD_DEFINE(c1, STACKSIZE, communication_thread_entry, NULL, NULL, NULL, COMMUNICATION_THREAD_PRIORITY, 0, 0);
+K_THREAD_DEFINE(c1, STACKSIZE, communication_thread_entry, NULL, NULL, NULL, COMMUNICATION_THREAD_PRIORITY, K_USER, 0);
 K_THREAD_DEFINE(w1, STACKSIZE, worker_thread_entry, NULL, NULL, NULL,  WORKER_THREAD_PRIORITY, 0, 0);
 
 /* Grant communication thread access to needed kernel objects */
-//k_thread_access_grant(c1, &communication_to_worker, &worker_to_communication);
 //K_HEAP_DEFINE(c1_heap, 2048);
-//K_THREAD_ACCESS_GRANT(c1, &communication_to_worker, &worker_to_communication);
+K_THREAD_ACCESS_GRANT(c1, &communication_to_worker, &worker_to_communication);
 
 void worker_thread_entry(void) 
 {
     printk("Hello World from Worker Thread! %s\n", CONFIG_BOARD);
     struct FifoMessageItem *item;
+
+    //k_thread_access_grant(c1, &communication_to_worker, &worker_to_communication);
 
     while(true) 
     {

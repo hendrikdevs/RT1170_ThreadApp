@@ -11,78 +11,32 @@
 #include <logging/log.h>
 LOG_MODULE_REGISTER(cdc_acm_echo, LOG_LEVEL_INF);
 
-#define RING_BUF_SIZE 1024
-uint8_t ring_buffer[RING_BUF_SIZE];
-
-struct ring_buf ringbuf;
-
 union Serialize {
 	struct Message msg;
 	char buffer[sizeof(struct Message)];
 };
 
-static void interrupt_handler(const struct device *dev, void *user_data)
-{
-	ARG_UNUSED(user_data);
-
-	while (uart_irq_update(dev) && uart_irq_is_pending(dev)) {
-		if (uart_irq_rx_ready(dev)) {
-			int recv_len, rb_len;
-			uint8_t buffer[64];
-			size_t len = MIN(ring_buf_space_get(&ringbuf),
-					 sizeof(buffer));
-
-			recv_len = uart_fifo_read(dev, buffer, len);
-
-			rb_len = ring_buf_put(&ringbuf, buffer, recv_len);
-			if (rb_len < recv_len) {
-				LOG_ERR("Drop %u bytes\n", recv_len - rb_len);
-			}
-            LOG_DBG("tty fifo -> ringbuf %d bytes\n", rb_len);
-
-			uart_irq_tx_enable(dev);
-		}
-
-		if (uart_irq_tx_ready(dev)) {
-			uint8_t buffer[64];
-			int rb_len, send_len;
-
-			rb_len = ring_buf_get(&ringbuf, buffer, sizeof(buffer));
-			if (!rb_len) {
-				LOG_DBG("Ring buffer empty, disable TX IRQ\n");
-				uart_irq_tx_disable(dev);
-				continue;
-			}
-
-			send_len = uart_fifo_fill(dev, buffer, rb_len);
-			if (send_len < rb_len) {
-				LOG_ERR("Drop %d bytes\n", rb_len - send_len);
-			}
-
-			LOG_DBG("ringbuf -> tty fifo %d bytes\n", send_len);
-		}
-	}
-}
-
 void send_over_uart(FifoMessageItem_t* fifoItem) {
-	/* pass */
+	union Serialize tx_data;
+	tx_data.msg = fifoItem->message;
+	uart_tx(fifoItem->dev, tx_data.buffer, sizeof(tx_data.buffer), 1000);
 }
 
-static void write_to_fifo(const struct device* dev, void* user_data) {
+static void recieve_to_fifo(const struct device* dev, void* user_data) {
 	ARG_UNUSED(user_data);
 
 	/* recive data into buffer after interrupt */
 	while (uart_irq_update(dev) && uart_irq_is_pending(dev)) {
 		if(uart_irq_rx_ready(dev)) {
 			int recv_len;
-			union Serialize tx_data;
+			union Serialize rx_data;
 
-			recv_len = uart_fifo_read(dev, tx_data.buffer, sizeof(tx_data.buffer));
+			recv_len = uart_fifo_read(dev, rx_data.buffer, sizeof(rx_data.buffer));
 
 			/* put into kernel fifo */
 			struct FifoMessageItem fifoItem;
 			fifoItem.dev = dev;
-			fifoItem.message = tx_data.msg;
+			fifoItem.message = rx_data.msg;
 			fifoItem.send = send_over_uart;
 			k_fifo_put(&extern_to_communication, &fifoItem);
 
@@ -106,8 +60,6 @@ int init_usb(void){
         LOG_ERR("Failed to enable USB\n");
         return -1;
     }
-
-	ring_buf_init(&ringbuf, sizeof(ring_buffer), ring_buffer);
 
 	LOG_INF("Wait for DTR");
     while(true){
@@ -140,7 +92,7 @@ int init_usb(void){
         LOG_INF("Baudrate detected: %d\n", baudrate);
 	}
 
-    uart_irq_callback_set(dev, write_to_fifo);
+    uart_irq_callback_set(dev, recieve_to_fifo);
 
     /* enable rx interrupts */
     uart_irq_rx_enable(dev);

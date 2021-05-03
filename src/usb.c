@@ -11,11 +11,6 @@
 #include <logging/log.h>
 LOG_MODULE_REGISTER(cdc_acm_echo, LOG_LEVEL_INF);
 
-#define RING_BUF_SIZE 1024
-uint8_t ring_buffer[RING_BUF_SIZE];
-
-struct ring_buf ringbuf;
-
 union Serialize {
 	struct Message msg;
 	char buffer[sizeof(struct Message)];

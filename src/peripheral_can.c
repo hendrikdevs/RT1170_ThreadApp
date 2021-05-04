@@ -20,7 +20,6 @@ struct zcan_frame send_frame;
 void send(FifoMessageItem_t *item);
 void receive(struct zcan_frame *frame, void *arg);
 
-
 int init_can(void) 
 {
     int filter_id;

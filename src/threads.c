@@ -47,6 +47,7 @@ void worker_thread_entry(void)
 
         /* Process Message */
         k_msleep(item->message.sleep_in_ms);
+        reverse_in_place(item->message.text, sizeof(item->message.text));
 
         /* Send message backwards to the communication thread */
         k_fifo_put(&worker_to_communication, item);
@@ -100,13 +101,17 @@ void communication_thread_entry(void)
 
 void reverse_in_place(char* text, const size_t length) 
 {
+    /* Counters */
+    int i;
+    int len = length - 1;
+
     char tmp;
 
-    for (int i = 0; i < length / 2; i++) 
+    for (i = 0; i < length / 2; i++) 
     {
         tmp = text[i];
-        text[i] = text[length - (i + 1)];
-        text[length - (i + 1)] = tmp;
+        text[i] = text[len];
+        text[len--] = tmp;
     }
 
     return;

@@ -51,7 +51,8 @@ void receive(struct zcan_frame *frame, void *arg)
     work_item->send = send;
     work_item->message.priority = frame->data[0];
     work_item->message.sleep_in_ms = frame->data[1];
-    strncpy(frame->data[2], work_item->message.text, sizeof(work_item->message.text));
+
+    strncpy(work_item->message.text, frame->data, sizeof(work_item->message.text));
 
     k_fifo_put(&extern_to_communication, work_item);
 }

@@ -2,6 +2,7 @@
 #include "peripheral_can.h"
 #include "threads.h"
 #include <device.h>
+#include <drivers/can.h>
 
 //LOG_MODULE_REGISTER(peripheral_can, CONFIG_PERIPHERAL_CAN_LOG_LEVEL);
 

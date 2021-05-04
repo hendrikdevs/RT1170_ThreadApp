@@ -1,24 +1,19 @@
 #include "usb.h"
 #include "threads.h"
+#include "message/message.h"
 #include <stdio.h>
 #include <string.h>
 #include <device.h>
 #include <drivers/uart.h>
 #include <zephyr.h>
-#include <sys/ring_buffer.h>
 
 #include <usb/usb_device.h>
 #include <logging/log.h>
 LOG_MODULE_REGISTER(cdc_acm_echo, LOG_LEVEL_INF);
 
-union Serialize {
-	struct Message msg;
-	char buffer[sizeof(struct Message)];
-};
-
 void send_over_uart(FifoMessageItem_t* fifoItem) {
-	union Serialize tx_data;
-	tx_data.msg = fifoItem->message;
+	union Serialized_Message tx_data;
+	tx_data.message = fifoItem->message;
 	uart_tx(fifoItem->dev, tx_data.buffer, sizeof(tx_data.buffer), 1000);
 }
 
@@ -29,14 +24,14 @@ static void recieve_to_fifo(const struct device* dev, void* user_data) {
 	while (uart_irq_update(dev) && uart_irq_is_pending(dev)) {
 		if(uart_irq_rx_ready(dev)) {
 			int recv_len;
-			union Serialize rx_data;
+			union Serialized_Message rx_data;
 
 			recv_len = uart_fifo_read(dev, rx_data.buffer, sizeof(rx_data.buffer));
 
 			/* put into kernel fifo */
 			struct FifoMessageItem fifoItem;
 			fifoItem.dev = dev;
-			fifoItem.message = rx_data.msg;
+			fifoItem.message = rx_data.message;
 			fifoItem.send = send_over_uart;
 			k_fifo_put(&extern_to_communication, &fifoItem);
 

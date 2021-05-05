@@ -3,21 +3,24 @@
 #include <sys/printk.h>
 #include "threads.h"
 #include <drivers/uart.h>
+#include <app_memory/mem_domain.h>
+
+K_APPMEM_PARTITION_DEFINE(c1_partition);
 
 /* Thread communication FIFOS */
 K_FIFO_DEFINE(communication_to_worker);
 K_FIFO_DEFINE(worker_to_communication);
 
-/* Peripheral recieved messages */
+/* Peripheral received messages */
 K_FIFO_DEFINE(extern_to_communication);
 
-/* Defines for the E_POLL Events for the comminication thread */
+/* Defines for the E_POLL Events for the communication thread */
 #define K_POLL_EVENT_AMOUNT 2
 #define EXTERN_MESSAGE_INCOMING 0
 #define WORKER_MESSAGE_INCOMING 1
 
 /* Communication thread poll events setup */
-struct k_poll_event events[K_POLL_EVENT_AMOUNT] = {
+K_APP_DMEM(c1_partition) struct k_poll_event events[K_POLL_EVENT_AMOUNT] = {
     K_POLL_EVENT_STATIC_INITIALIZER(K_POLL_TYPE_FIFO_DATA_AVAILABLE,
                                     K_POLL_MODE_NOTIFY_ONLY,
                                     &extern_to_communication, 0),
@@ -26,6 +29,7 @@ struct k_poll_event events[K_POLL_EVENT_AMOUNT] = {
                                     &worker_to_communication, 0),
 };
 
+/* Setup Threads */
 K_THREAD_DEFINE(c1, STACKSIZE, communication_thread_entry, NULL, NULL, NULL, COMMUNICATION_THREAD_PRIORITY, K_USER, 0);
 K_THREAD_DEFINE(w1, STACKSIZE, worker_thread_entry, NULL, NULL, NULL,  WORKER_THREAD_PRIORITY, 0, 0);
 
@@ -36,6 +40,10 @@ K_HEAP_DEFINE(usermode_heap, 512);
 /* Grant communication thread access to needed kernel objects */
 K_HEAP_DEFINE(message_item_heap, sizeof(FifoMessageItem_t) * 20);
 K_THREAD_ACCESS_GRANT(c1, &communication_to_worker, &worker_to_communication, &message_item_heap, &events);
+
+/* Memory partition for userspace */
+//K_MEM_PARTITION_DEFINE()
+
 
 void worker_thread_entry(void) 
 {
@@ -52,7 +60,7 @@ void worker_thread_entry(void)
 
         /* Process Message */
         k_msleep(item->message.sleep_in_ms);
-        reverse_in_place(item->message.text, sizeof(item->message.text));
+        //reverse_in_place(item->message.text, sizeof(item->message.text));
 
         /* Send message backwards to the communication thread */
         k_fifo_put(&worker_to_communication, item);
@@ -64,8 +72,7 @@ void communication_thread_entry(void)
     printk("Hello World from Communication Thread! %s\n", CONFIG_BOARD);
 
     /* Loop, der die FIFOS checkt ob neue "Ressourcen" (/Nachrichten)
-     * vorhanden sind, wenn ja diese abarbeiten.
-    */
+       vorhanden sind, wenn ja diese abarbeiten. */
     FifoMessageItem_t *work_item;
     int poll = -1;
 

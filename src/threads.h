@@ -87,11 +87,4 @@ void communication_thread_entry(void);
  */
 void reverse_in_place(char* text, const size_t length);
 
-/**
- * @brief Send out the Message.
- * All needed Information is contained in the FifoMessageItem.
- * 
- */
-void send_via_peripheral(FifoMessageItem_t*);
-
 #endif /* THREADS_H */

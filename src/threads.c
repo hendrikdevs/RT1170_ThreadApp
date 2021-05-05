@@ -29,12 +29,17 @@ struct k_poll_event events[K_POLL_EVENT_AMOUNT] = {
 K_THREAD_DEFINE(c1, STACKSIZE, communication_thread_entry, NULL, NULL, NULL, COMMUNICATION_THREAD_PRIORITY, K_USER, 0);
 K_THREAD_DEFINE(w1, STACKSIZE, worker_thread_entry, NULL, NULL, NULL,  WORKER_THREAD_PRIORITY, 0, 0);
 
+/* Definitions for Usermode */
+
+K_HEAP_DEFINE(usermode_heap, 512);
+
 /* Grant communication thread access to needed kernel objects */
 K_HEAP_DEFINE(message_item_heap, sizeof(FifoMessageItem_t) * 20);
-K_THREAD_ACCESS_GRANT(c1, &communication_to_worker, &worker_to_communication, &message_item_heap);
+K_THREAD_ACCESS_GRANT(c1, &communication_to_worker, &worker_to_communication, &message_item_heap, &events);
 
 void worker_thread_entry(void) 
 {
+    k_thread_heap_assign(c1, &usermode_heap);
     printk("Hello World from Worker Thread! %s\n", CONFIG_BOARD);
     struct FifoMessageItem *item;
 

@@ -24,6 +24,7 @@ extern const k_tid_t c1;
  * 
  */
 extern struct k_heap message_item_heap;
+extern struct k_heap usermode_heap;
 
 /**
  * @brief Identifier of the worker kernel mode thread.

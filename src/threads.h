@@ -4,11 +4,14 @@
 #include <message/message.h>
 #include <zephyr.h>
 #include <kernel/thread.h>
+#include <app_memory/app_memdomain.h>
 
 #define STACKSIZE 512
 #define COMMUNICATION_THREAD_PRIORITY 2
 #define WORKER_THREAD_PRIORITY -2
 
+
+extern struct k_mem_partition c1_partition;
 
 /**
  * @brief Identifier of the communication user mode thread.

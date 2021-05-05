@@ -13,7 +13,7 @@ void main(void)
     /* Intialize USB Peripheral */
     int ret_usb;
 
-    ret_usb = init_usb();
+    //ret_usb = init_usb();
     if(ret_usb){
         printk("Error while setting up USB\n");
     }
@@ -21,7 +21,7 @@ void main(void)
     /* Initialize CAN Peripheral */
     int ret_can = -1;
     
-    ret_can = init_can();
+    //ret_can = init_can();
     if(ret_can == -1) {
         // LOG_ERR();
     }

@@ -111,9 +111,10 @@ void communication_thread_entry(void* p1, void* p2, void* p3)
 
 void worker_thread_entry(void* p1, void* p2, void* p3) 
 {
+    LOG_INF("Worker thread started");
+
     k_thread_heap_assign(w1, &worker_heap);
     
-    printk("Hello World from Worker Thread! %s\n", CONFIG_BOARD);
     struct FifoMessageItem *item;
 
     //k_thread_access_grant(c1, &communication_to_worker, &worker_to_communication);

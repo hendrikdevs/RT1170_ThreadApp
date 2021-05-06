@@ -76,14 +76,17 @@ typedef struct FifoMessageItem FifoMessageItem_t;
  * @brief The main function for a worker thread.
  * 
  */
-void worker_thread_entry(void);
+void worker_thread_entry(void*, void*, void*);
 
 /**
  * @brief The main function for a communication thread.
  * The communication thread is running in usermode.
  *
  */
-void communication_thread_entry(void);
+void communication_thread_entry(void*, void*, void*);
+
+/** @brief Setup for the Thread before it enters Usermode */
+void communication_thread_setup(void*, void*, void*);
 
 /**
  * @brief Reverses a char array in place.

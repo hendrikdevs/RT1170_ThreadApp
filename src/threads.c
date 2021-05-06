@@ -45,16 +45,19 @@ K_HEAP_DEFINE(usermode_heap, 512);
 K_HEAP_DEFINE(message_item_heap, sizeof(FifoMessageItem_t) * 20);
 
 
-void communication_thread_setup(void)
+void communication_thread_setup(void* p1, void* p2, void* p3)
 {
     k_thread_heap_assign(c1, &usermode_heap);
     k_thread_access_grant(c1, &communication_to_worker, &worker_to_communication, &message_item_heap, &events);
+    
+    k_mem_domain_init(&test_domain, ARRAY_SIZE(test_domain_parts), test_domain_parts);
+    k_mem_domain_add_thread(&test_domain, c1);
 
     k_thread_user_mode_enter(communication_thread_entry, NULL, NULL, NULL);
 }
 
 
-void communication_thread_entry(void) 
+void communication_thread_entry(void* p1, void* p2, void* p3) 
 {
     LOG_INF("Communication thread started");
 
@@ -100,7 +103,7 @@ void communication_thread_entry(void)
 }
 
 
-void worker_thread_entry(void) 
+void worker_thread_entry(void* p1, void* p2, void* p3) 
 {
     printk("Hello World from Worker Thread! %s\n", CONFIG_BOARD);
     struct FifoMessageItem *item;

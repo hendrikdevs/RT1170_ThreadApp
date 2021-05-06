@@ -6,7 +6,6 @@
 #include "usb.h"
 #include "peripheral_can.h"
 #include "dummy.h"
-#include "main.h"
 
 LOG_MODULE_REGISTER(main);
 

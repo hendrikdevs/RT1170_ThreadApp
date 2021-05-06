@@ -1,12 +1,22 @@
 #include <zephyr.h>
 #include <kernel.h>
 #include <sys/printk.h>
-#include "threads.h"
 #include <drivers/uart.h>
 #include <app_memory/mem_domain.h>
+#include <logging/log.h>
+
+#include "threads.h"
+
+LOG_MODULE_REGISTER(threads);
+
+struct k_mem_domain test_domain;
+extern struct k_mem_partition c1_partition;
 
 /* Set up for memory management */
 K_APPMEM_PARTITION_DEFINE(c1_partition);
+struct k_mem_partition *test_domain_parts[] = {
+    &c1_partition
+};
 
 /* Fifo for communication between threads and ISR */
 K_FIFO_DEFINE(communication_to_worker);
@@ -31,7 +41,6 @@ K_APP_DMEM(c1_partition) struct k_poll_event events[K_POLL_EVENT_AMOUNT] = {
 K_THREAD_DEFINE(c1, STACKSIZE, communication_thread_setup, NULL, NULL, NULL, COMMUNICATION_THREAD_PRIORITY, 0, 0);
 K_THREAD_DEFINE(w1, STACKSIZE, worker_thread_entry, NULL, NULL, NULL,  WORKER_THREAD_PRIORITY, 0, 0);
 
-
 K_HEAP_DEFINE(usermode_heap, 512);
 K_HEAP_DEFINE(message_item_heap, sizeof(FifoMessageItem_t) * 20);
 
@@ -47,7 +56,7 @@ void communication_thread_setup(void)
 
 void communication_thread_entry(void) 
 {
-    printk("Hello World from Communication Thread! %s\n", CONFIG_BOARD);
+    LOG_INF("Communication thread started");
 
     /* Loop, der die FIFOS checkt ob neue "Ressourcen" (/Nachrichten)
        vorhanden sind, wenn ja diese abarbeiten. */
@@ -64,17 +73,18 @@ void communication_thread_entry(void)
 
         /* We got atleast one event */
         if (events[WORKER_MESSAGE_INCOMING].state == K_POLL_STATE_FIFO_DATA_AVAILABLE) {
-            printk("Got message from the worker thread!\n");
+            LOG_INF("Received message from the worker thread");
             work_item = k_fifo_get(&worker_to_communication, K_FOREVER);
 
             /* Send message and free it from heap */
             work_item->send(work_item);
             k_heap_free(&message_item_heap, work_item);
+            LOG_INF("Send Message to extern and erased item from heap");
         }
 
         /* ISR recieved a message and put it into it FIFO */
         if(events[EXTERN_MESSAGE_INCOMING].state == K_POLL_STATE_FIFO_DATA_AVAILABLE) {
-            printk("Recieved message from ISR FIFO\n");
+            LOG_INF("Received message from ISR FIFO");
             work_item = k_fifo_get(&extern_to_communication, K_FOREVER);
 
             /* validate recieved message (TODO) */

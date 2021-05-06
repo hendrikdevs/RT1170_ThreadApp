@@ -10,9 +10,6 @@
 #define COMMUNICATION_THREAD_PRIORITY 2
 #define WORKER_THREAD_PRIORITY -2
 
-
-extern struct k_mem_partition c1_partition;
-
 /**
  * @brief Identifier of the communication user mode thread.
  * Gets set by threads.c zephyr macro. Used for receiving and
@@ -27,6 +24,11 @@ extern const k_tid_t c1;
  * 
  */
 extern struct k_heap message_item_heap;
+
+/**
+ * @brief Heap space for the communication (usermode) thread.
+ * 
+ */
 extern struct k_heap usermode_heap;
 
 /**
@@ -56,9 +58,10 @@ extern struct k_fifo worker_to_communication;
 extern struct k_fifo extern_to_communication;
 
 /**
- * @brief Used to send incoming can messages from the 
- * communication thread to the worker thread.
+ * @brief Fifo Message Item
  * 
+ * Used to send incoming can messages from the 
+ * communication thread to the worker thread.
  */
 struct FifoMessageItem 
 {

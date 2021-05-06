@@ -1,6 +1,5 @@
 #include <zephyr.h>
 #include <kernel.h>
-#include <sys/printk.h>
 #include <drivers/uart.h>
 #include <app_memory/mem_domain.h>
 #include <logging/log.h>

@@ -71,6 +71,13 @@ void communication_thread_entry(void* p1, void* p2, void* p3)
 
     while(true)
     {
+        /* Reset Events for next loop .
+         * By doing this here we can reduce the indentation level ins the IFs.
+         */
+        events[0].state = K_POLL_STATE_NOT_READY;
+        events[1].state = K_POLL_STATE_NOT_READY;
+
+        /* "Poll" for new event */
         poll = k_poll(events, K_POLL_EVENT_AMOUNT, K_FOREVER);
 
         /* Poll again if an error happens */
@@ -78,9 +85,13 @@ void communication_thread_entry(void* p1, void* p2, void* p3)
             continue;
 
         /* We got atleast one event */
-        if (events[WORKER_MESSAGE_INCOMING].state == K_POLL_STATE_FIFO_DATA_AVAILABLE) {
+        if (events[WORKER_MESSAGE_INCOMING].state == K_POLL_STATE_FIFO_DATA_AVAILABLE)
+        {
             LOG_INF("Received message from the worker thread");
             work_item = k_fifo_get(&worker_to_communication, K_MSEC(100));
+            if(work_item == NULL) 
+                continue;
+
             LOG_DBG("Was able to read work_item");
 
             /* Send message and free it from heap */
@@ -90,30 +101,28 @@ void communication_thread_entry(void* p1, void* p2, void* p3)
         }
 
         /* ISR recieved a message and put it into it FIFO */
-        if(events[EXTERN_MESSAGE_INCOMING].state == K_POLL_STATE_FIFO_DATA_AVAILABLE) {
+        if(events[EXTERN_MESSAGE_INCOMING].state == K_POLL_STATE_FIFO_DATA_AVAILABLE) 
+        {
             LOG_INF("Received message from ISR FIFO");
             work_item = k_fifo_get(&extern_to_communication, K_MSEC(100));
-
+            if(work_item == NULL) 
+                continue;
+            
             /* validate recieved message (TODO) */
 
             /* send to worker */
             k_fifo_put(&communication_to_worker, work_item);
             LOG_DBG("Put FifoMessageItem into communication_to_worker queue");
         }
-
-        /* Reset Events for next loop */
-        events[0].state = K_POLL_STATE_NOT_READY;
-        events[1].state = K_POLL_STATE_NOT_READY;
     }
 }
-
 
 void worker_thread_entry(void* p1, void* p2, void* p3) 
 {
     LOG_INF("Worker thread started");
 
     k_thread_heap_assign(w1, &worker_heap);
-    
+
     struct FifoMessageItem *item;
 
     //k_thread_access_grant(c1, &communication_to_worker, &worker_to_communication);
@@ -131,7 +140,6 @@ void worker_thread_entry(void* p1, void* p2, void* p3)
         k_fifo_put(&worker_to_communication, item);
     }
 }
-
 
 void reverse_in_place(char* text, const size_t length) 
 {

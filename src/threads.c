@@ -81,7 +81,7 @@ void communication_thread_entry(void* p1, void* p2, void* p3)
         /* We got atleast one event */
         if (events[WORKER_MESSAGE_INCOMING].state == K_POLL_STATE_FIFO_DATA_AVAILABLE) {
             LOG_INF("Received message from the worker thread");
-            work_item = k_fifo_get(&worker_to_communication, K_FOREVER);
+            work_item = k_fifo_get(&worker_to_communication, K_MSEC(100));
             LOG_DBG("Was able to read work_item");
 
             /* Send message and free it from heap */

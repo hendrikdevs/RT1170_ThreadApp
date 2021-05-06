@@ -105,6 +105,7 @@ void communication_thread_entry(void)
             /* Send message and free it from heap */
             work_item->send(work_item);
             k_heap_free(&message_item_heap, work_item);
+            LOG_INF("Send Message to extern and erased item from heap");
         }
 
         /* ISR recieved a message and put it into it FIFO */

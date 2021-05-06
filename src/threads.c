@@ -1,11 +1,21 @@
 #include <zephyr.h>
 #include <kernel.h>
 #include <sys/printk.h>
-#include "threads.h"
 #include <drivers/uart.h>
 #include <app_memory/mem_domain.h>
+#include <logging/log.h>
+
+#include "threads.h"
+
+LOG_MODULE_REGISTER(threads);
+
+struct k_mem_domain test_domain;
+extern struct k_mem_partition c1_partition;
 
 K_APPMEM_PARTITION_DEFINE(c1_partition);
+struct k_mem_partition *test_domain_parts[] = {
+    &c1_partition
+};
 
 /* Thread communication FIFOS */
 K_FIFO_DEFINE(communication_to_worker);
@@ -34,21 +44,23 @@ K_THREAD_DEFINE(c1, STACKSIZE, communication_thread_entry, NULL, NULL, NULL, COM
 K_THREAD_DEFINE(w1, STACKSIZE, worker_thread_entry, NULL, NULL, NULL,  WORKER_THREAD_PRIORITY, 0, 0);
 
 /* Definitions for Usermode */
-
 K_HEAP_DEFINE(usermode_heap, 512);
 
 /* Grant communication thread access to needed kernel objects */
 K_HEAP_DEFINE(message_item_heap, sizeof(FifoMessageItem_t) * 20);
-K_THREAD_ACCESS_GRANT(c1, &communication_to_worker, &worker_to_communication, &message_item_heap, &events);
+K_THREAD_ACCESS_GRANT(c1, &communication_to_worker, &worker_to_communication, &message_item_heap, &events, &extern_to_communication);
 
 /* Memory partition for userspace */
 //K_MEM_PARTITION_DEFINE()
 
-
 void worker_thread_entry(void) 
 {
     k_thread_heap_assign(c1, &usermode_heap);
-    printk("Hello World from Worker Thread! %s\n", CONFIG_BOARD);
+
+    k_mem_domain_init(&test_domain, ARRAY_SIZE(test_domain_parts), test_domain_parts);
+    k_mem_domain_add_thread(&test_domain, c1);
+
+    LOG_INF("Worker thread started");
     struct FifoMessageItem *item;
 
     //k_thread_access_grant(c1, &communication_to_worker, &worker_to_communication);
@@ -64,12 +76,13 @@ void worker_thread_entry(void)
 
         /* Send message backwards to the communication thread */
         k_fifo_put(&worker_to_communication, item);
+        LOG_INF("Worker thread processed item (pointer: %p)", (void*)item);
     }
 }
 
 void communication_thread_entry(void) 
 {
-    printk("Hello World from Communication Thread! %s\n", CONFIG_BOARD);
+    LOG_INF("Communication thread started");
 
     /* Loop, der die FIFOS checkt ob neue "Ressourcen" (/Nachrichten)
        vorhanden sind, wenn ja diese abarbeiten. */
@@ -86,7 +99,7 @@ void communication_thread_entry(void)
 
         /* We got atleast one event */
         if (events[WORKER_MESSAGE_INCOMING].state == K_POLL_STATE_FIFO_DATA_AVAILABLE) {
-            printk("Got message from the worker thread!\n");
+            LOG_INF("Received message from the worker thread");
             work_item = k_fifo_get(&worker_to_communication, K_FOREVER);
 
             /* Send message and free it from heap */
@@ -96,7 +109,7 @@ void communication_thread_entry(void)
 
         /* ISR recieved a message and put it into it FIFO */
         if(events[EXTERN_MESSAGE_INCOMING].state == K_POLL_STATE_FIFO_DATA_AVAILABLE) {
-            printk("Recieved message from ISR FIFO\n");
+            LOG_INF("Received message from ISR FIFO");
             work_item = k_fifo_get(&extern_to_communication, K_FOREVER);
 
             /* validate recieved message (TODO) */

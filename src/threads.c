@@ -45,10 +45,11 @@ K_THREAD_DEFINE(w1, STACKSIZE, worker_thread_entry, NULL, NULL, NULL,  WORKER_TH
 
 /* Definitions for Usermode */
 K_HEAP_DEFINE(usermode_heap, 512);
+K_HEAP_DEFINE(worker_heap, 512);
 
 /* Grant communication thread access to needed kernel objects */
-K_HEAP_DEFINE(message_item_heap, sizeof(FifoMessageItem_t) * 20);
-K_THREAD_ACCESS_GRANT(c1, &communication_to_worker, &worker_to_communication, &message_item_heap, &events, &extern_to_communication);
+K_APP_DMEM(c1_partition) K_HEAP_DEFINE(message_item_heap, sizeof(FifoMessageItem_t) * 20);
+K_THREAD_ACCESS_GRANT(c1, &communication_to_worker, &worker_to_communication, &message_item_heap, &events, &extern_to_communication, &worker_heap);
 
 /* Memory partition for userspace */
 //K_MEM_PARTITION_DEFINE()
@@ -56,6 +57,7 @@ K_THREAD_ACCESS_GRANT(c1, &communication_to_worker, &worker_to_communication, &m
 void worker_thread_entry(void) 
 {
     k_thread_heap_assign(c1, &usermode_heap);
+    k_thread_heap_assign(w1, &worker_heap);
 
     k_mem_domain_init(&test_domain, ARRAY_SIZE(test_domain_parts), test_domain_parts);
     k_mem_domain_add_thread(&test_domain, c1);
@@ -76,7 +78,7 @@ void worker_thread_entry(void)
 
         /* Send message backwards to the communication thread */
         k_fifo_put(&worker_to_communication, item);
-        LOG_INF("Worker thread processed item (pointer: %p)", (void*)item);
+        LOG_INF("Worker thread processed item (pointer: %p) and send it to communication thread", (void*)item);
     }
 }
 
@@ -101,7 +103,7 @@ void communication_thread_entry(void)
         if (events[WORKER_MESSAGE_INCOMING].state == K_POLL_STATE_FIFO_DATA_AVAILABLE) {
             LOG_INF("Received message from the worker thread");
             work_item = k_fifo_get(&worker_to_communication, K_FOREVER);
-
+            LOG_DBG("Was able to read work_item");
             /* Send message and free it from heap */
             work_item->send(work_item);
             k_heap_free(&message_item_heap, work_item);
@@ -117,6 +119,7 @@ void communication_thread_entry(void)
 
             /* send to worker */
             k_fifo_put(&communication_to_worker, work_item);
+            LOG_DBG("Put FifoMessageItem into communication_to_worker queue");
         }
 
         /* Reset Events for next loop */

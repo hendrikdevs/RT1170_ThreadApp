@@ -18,6 +18,8 @@
  */
 extern const k_tid_t c1;
 
+extern struct k_mem_partition c1_partition;
+
 /**
  * @brief All incoming messages that gets created as
  * FifoMessageItem_t gets allocated on this heap.
@@ -69,7 +71,7 @@ struct FifoMessageItem
 	message_t message;
 	void (*send)(struct FifoMessageItem *message_item);  /* Function Pointer to the specific send function (uart, can, etc.) */
 	const struct device* dev;  /* Device which recieved the Message*/
-};
+} __packed __aligned(4);
 typedef struct FifoMessageItem FifoMessageItem_t;
 
 /**

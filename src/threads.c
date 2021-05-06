@@ -1,6 +1,5 @@
 #include <zephyr.h>
 #include <kernel.h>
-#include <sys/printk.h>
 #include <drivers/uart.h>
 #include <app_memory/mem_domain.h>
 #include <logging/log.h>
@@ -9,12 +8,12 @@
 
 LOG_MODULE_REGISTER(threads);
 
-struct k_mem_domain test_domain;
+/* Set up for memory management */
+struct k_mem_domain communication_domain;
 extern struct k_mem_partition c1_partition;
 
-/* Set up for memory management */
 K_APPMEM_PARTITION_DEFINE(c1_partition);
-struct k_mem_partition *test_domain_parts[] = {
+struct k_mem_partition *communication_domain_parts[] = {
     &c1_partition
 };
 
@@ -46,16 +45,16 @@ K_HEAP_DEFINE(worker_heap, 512);
 
 /* Grant communication thread access to needed kernel objects */
 K_APP_DMEM(c1_partition) K_HEAP_DEFINE(message_item_heap, sizeof(FifoMessageItem_t) * 20);
-K_THREAD_ACCESS_GRANT(c1, &communication_to_worker, &worker_to_communication, &message_item_heap, &events, &extern_to_communication, &worker_heap);
+// K_THREAD_ACCESS_GRANT(c1, &communication_to_worker, &worker_to_communication, &message_item_heap, &events, &extern_to_communication);
 
 
 void communication_thread_setup(void* p1, void* p2, void* p3)
 {
     k_thread_heap_assign(c1, &usermode_heap);
-    k_thread_access_grant(c1, &communication_to_worker, &worker_to_communication, &message_item_heap, &events);
+    k_thread_access_grant(c1, &communication_to_worker, &worker_to_communication, &message_item_heap, &events, &extern_to_communication);
     
-    k_mem_domain_init(&test_domain, ARRAY_SIZE(test_domain_parts), test_domain_parts);
-    k_mem_domain_add_thread(&test_domain, c1);
+    k_mem_domain_init(&communication_domain, ARRAY_SIZE(communication_domain_parts), communication_domain_parts);
+    k_mem_domain_add_thread(&communication_domain, c1);
 
     k_thread_user_mode_enter(communication_thread_entry, NULL, NULL, NULL);
 }
@@ -81,7 +80,7 @@ void communication_thread_entry(void* p1, void* p2, void* p3)
         /* We got atleast one event */
         if (events[WORKER_MESSAGE_INCOMING].state == K_POLL_STATE_FIFO_DATA_AVAILABLE) {
             LOG_INF("Received message from the worker thread");
-            work_item = k_fifo_get(&worker_to_communication, K_FOREVER);
+            work_item = k_fifo_get(&worker_to_communication, K_MSEC(100));
             LOG_DBG("Was able to read work_item");
 
             /* Send message and free it from heap */
@@ -111,9 +110,10 @@ void communication_thread_entry(void* p1, void* p2, void* p3)
 
 void worker_thread_entry(void* p1, void* p2, void* p3) 
 {
+    LOG_INF("Worker thread started");
+
     k_thread_heap_assign(w1, &worker_heap);
     
-    printk("Hello World from Worker Thread! %s\n", CONFIG_BOARD);
     struct FifoMessageItem *item;
 
     //k_thread_access_grant(c1, &communication_to_worker, &worker_to_communication);

@@ -45,13 +45,13 @@ K_HEAP_DEFINE(worker_heap, 512);
 
 /* Grant communication thread access to needed kernel objects */
 K_APP_DMEM(c1_partition) K_HEAP_DEFINE(message_item_heap, sizeof(FifoMessageItem_t) * 20);
-K_THREAD_ACCESS_GRANT(c1, &communication_to_worker, &worker_to_communication, &message_item_heap, &events, &extern_to_communication, &worker_heap);
+// K_THREAD_ACCESS_GRANT(c1, &communication_to_worker, &worker_to_communication, &message_item_heap, &events, &extern_to_communication);
 
 
 void communication_thread_setup(void* p1, void* p2, void* p3)
 {
     k_thread_heap_assign(c1, &usermode_heap);
-    k_thread_access_grant(c1, &communication_to_worker, &worker_to_communication, &message_item_heap, &events);
+    k_thread_access_grant(c1, &communication_to_worker, &worker_to_communication, &message_item_heap, &events, &extern_to_communication);
     
     k_mem_domain_init(&communication_domain, ARRAY_SIZE(communication_domain_parts), communication_domain_parts);
     k_mem_domain_add_thread(&communication_domain, c1);

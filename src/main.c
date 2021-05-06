@@ -6,7 +6,6 @@
 #include "usb.h"
 #include "peripheral_can.h"
 #include "dummy.h"
-#include "main.h"
 
 LOG_MODULE_REGISTER(main);
 
@@ -16,11 +15,11 @@ void main(void)
 {
     printk("Hello World from main! %s\n", CONFIG_BOARD);
 
-    #if USE_DUMMY
+    #ifdef CONFIG_USE_DUMMY
     dummy_recieve_to_fifo();
     #endif
 
-    #if USE_USB
+    #ifdef CONFIG_USE_USB
     /* Intialize USB Peripheral */
     int ret_usb;
 
@@ -30,7 +29,7 @@ void main(void)
     }
     #endif
 
-    #if USE_CAN
+    #ifdef CONFIG_USE_CAN
     /* Initialize CAN Peripheral */
     int ret_can = -1;
     

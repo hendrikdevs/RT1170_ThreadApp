@@ -1,0 +1,25 @@
+mainmenu "Kconfig Options"
+
+menu "Project specific options"
+    
+config USE_CAN
+    bool "Enable the CAN handlers, Note that this option currently does not work with CONFIG_USERSPACE"
+    depends on CAN=y && USERSPACE=n
+
+
+config USE_USB
+    bool "Enable the USB handlers"
+    select SERIAL
+    select USB
+    select USB_DEVICE_STACK
+    select USB_CDC_ACM
+    select UART_INTERRUPT_DRIVEN
+    select UART_LINE_CTRL
+
+
+config USE_DUMMY
+    bool "Enable the Dummy Driver to send Messages"
+    
+endmenu
+
+source "Kconfig.zephyr"

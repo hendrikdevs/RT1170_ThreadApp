@@ -74,7 +74,7 @@ void communication_thread_entry(void)
         /* We got atleast one event */
         if (events[WORKER_MESSAGE_INCOMING].state == K_POLL_STATE_FIFO_DATA_AVAILABLE) {
             LOG_INF("Received message from the worker thread");
-            work_item = k_fifo_get(&worker_to_communication, K_FOREVER);
+            work_item = k_fifo_get(&worker_to_communication, K_MSEC(100));
 
             /* Send message and free it from heap */
             work_item->send(work_item);
@@ -85,7 +85,7 @@ void communication_thread_entry(void)
         /* ISR recieved a message and put it into it FIFO */
         if(events[EXTERN_MESSAGE_INCOMING].state == K_POLL_STATE_FIFO_DATA_AVAILABLE) {
             LOG_INF("Received message from ISR FIFO");
-            work_item = k_fifo_get(&extern_to_communication, K_FOREVER);
+            work_item = k_fifo_get(&extern_to_communication, K_MSEC(100));
 
             /* validate recieved message (TODO) */
 

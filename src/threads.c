@@ -5,21 +5,19 @@
 #include <drivers/uart.h>
 #include <app_memory/mem_domain.h>
 
+/* Set up for memory management */
 K_APPMEM_PARTITION_DEFINE(c1_partition);
 
-/* Thread communication FIFOS */
+/* Fifo for communication between threads and ISR */
 K_FIFO_DEFINE(communication_to_worker);
 K_FIFO_DEFINE(worker_to_communication);
-
-/* Peripheral received messages */
 K_FIFO_DEFINE(extern_to_communication);
 
-/* Defines for the E_POLL Events for the communication thread */
+/* Communication thread poll events setup */
 #define K_POLL_EVENT_AMOUNT 2
 #define EXTERN_MESSAGE_INCOMING 0
 #define WORKER_MESSAGE_INCOMING 1
 
-/* Communication thread poll events setup */
 K_APP_DMEM(c1_partition) struct k_poll_event events[K_POLL_EVENT_AMOUNT] = {
     K_POLL_EVENT_STATIC_INITIALIZER(K_POLL_TYPE_FIFO_DATA_AVAILABLE,
                                     K_POLL_MODE_NOTIFY_ONLY,
@@ -30,42 +28,22 @@ K_APP_DMEM(c1_partition) struct k_poll_event events[K_POLL_EVENT_AMOUNT] = {
 };
 
 /* Setup Threads */
-K_THREAD_DEFINE(c1, STACKSIZE, communication_thread_entry, NULL, NULL, NULL, COMMUNICATION_THREAD_PRIORITY, K_USER, 0);
+K_THREAD_DEFINE(c1, STACKSIZE, communication_thread_setup, NULL, NULL, NULL, COMMUNICATION_THREAD_PRIORITY, 0, 0);
 K_THREAD_DEFINE(w1, STACKSIZE, worker_thread_entry, NULL, NULL, NULL,  WORKER_THREAD_PRIORITY, 0, 0);
 
-/* Definitions for Usermode */
 
 K_HEAP_DEFINE(usermode_heap, 512);
-
-/* Grant communication thread access to needed kernel objects */
 K_HEAP_DEFINE(message_item_heap, sizeof(FifoMessageItem_t) * 20);
-K_THREAD_ACCESS_GRANT(c1, &communication_to_worker, &worker_to_communication, &message_item_heap, &events);
-
-/* Memory partition for userspace */
-//K_MEM_PARTITION_DEFINE()
 
 
-void worker_thread_entry(void) 
+void communication_thread_setup(void)
 {
     k_thread_heap_assign(c1, &usermode_heap);
-    printk("Hello World from Worker Thread! %s\n", CONFIG_BOARD);
-    struct FifoMessageItem *item;
+    k_thread_access_grant(c1, &communication_to_worker, &worker_to_communication, &message_item_heap, &events);
 
-    //k_thread_access_grant(c1, &communication_to_worker, &worker_to_communication);
-
-    while(true) 
-    {
-        /* Wait for new can message from communication thread */
-        item = k_fifo_get(&communication_to_worker, K_FOREVER);
-
-        /* Process Message */
-        k_msleep(item->message.sleep_in_ms);
-        //reverse_in_place(item->message.text, sizeof(item->message.text));
-
-        /* Send message backwards to the communication thread */
-        k_fifo_put(&worker_to_communication, item);
-    }
+    k_thread_user_mode_enter(communication_thread_entry, NULL, NULL, NULL);
 }
+
 
 void communication_thread_entry(void) 
 {
@@ -110,6 +88,29 @@ void communication_thread_entry(void)
         events[1].state = K_POLL_STATE_NOT_READY;
     }
 }
+
+
+void worker_thread_entry(void) 
+{
+    printk("Hello World from Worker Thread! %s\n", CONFIG_BOARD);
+    struct FifoMessageItem *item;
+
+    //k_thread_access_grant(c1, &communication_to_worker, &worker_to_communication);
+
+    while(true) 
+    {
+        /* Wait for new can message from communication thread */
+        item = k_fifo_get(&communication_to_worker, K_FOREVER);
+
+        /* Process Message */
+        k_msleep(item->message.sleep_in_ms);
+        //reverse_in_place(item->message.text, sizeof(item->message.text));
+
+        /* Send message backwards to the communication thread */
+        k_fifo_put(&worker_to_communication, item);
+    }
+}
+
 
 void reverse_in_place(char* text, const size_t length) 
 {

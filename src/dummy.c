@@ -14,17 +14,6 @@ void dummy_recieve_to_fifo(void) {
     struct Message msg = {0,1000,"hello"};
     fifoItem->message = msg;
 
-    // printk("original: {%d, %d, %s}\n", 
-    //     fifoItem->message.priority, 
-    //     fifoItem->message.sleep_in_ms, 
-    //     fifoItem->message.text
-    // );
-    // printk("fifoItem: {%d, %d, %s}\n", 
-    //     fifoItem->message.priority, 
-    //     fifoItem->message.sleep_in_ms, 
-    //     fifoItem->message.text
-    // );
-
     k_fifo_put(&extern_to_communication, fifoItem);
     printk("DRVR: \"Recieved\" message and sent into fifo\n");
 }

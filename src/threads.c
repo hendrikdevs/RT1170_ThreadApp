@@ -9,12 +9,12 @@
 
 LOG_MODULE_REGISTER(threads);
 
-struct k_mem_domain test_domain;
+/* Set up for memory management */
+struct k_mem_domain communication_domain;
 extern struct k_mem_partition c1_partition;
 
-/* Set up for memory management */
 K_APPMEM_PARTITION_DEFINE(c1_partition);
-struct k_mem_partition *test_domain_parts[] = {
+struct k_mem_partition *communication_domain_parts[] = {
     &c1_partition
 };
 
@@ -54,8 +54,8 @@ void communication_thread_setup(void* p1, void* p2, void* p3)
     k_thread_heap_assign(c1, &usermode_heap);
     k_thread_access_grant(c1, &communication_to_worker, &worker_to_communication, &message_item_heap, &events);
     
-    k_mem_domain_init(&test_domain, ARRAY_SIZE(test_domain_parts), test_domain_parts);
-    k_mem_domain_add_thread(&test_domain, c1);
+    k_mem_domain_init(&communication_domain, ARRAY_SIZE(communication_domain_parts), communication_domain_parts);
+    k_mem_domain_add_thread(&communication_domain, c1);
 
     k_thread_user_mode_enter(communication_thread_entry, NULL, NULL, NULL);
 }

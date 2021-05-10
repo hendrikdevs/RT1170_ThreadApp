@@ -6,6 +6,10 @@
 
 LOG_MODULE_REGISTER(peripheral_can);
 
+/* Private Headers */
+void send(FifoMessageItem_t *item);
+void receive(struct zcan_frame *frame, void *arg);
+
 const struct zcan_filter can_standard_filter = {
         .id_type = CAN_STANDARD_IDENTIFIER,
         .rtr = CAN_DATAFRAME,
@@ -16,9 +20,6 @@ const struct zcan_filter can_standard_filter = {
 
 const struct device* can_dev;
 struct zcan_frame send_frame;
-
-void send(FifoMessageItem_t *item);
-void receive(struct zcan_frame *frame, void *arg);
 
 int init_can(void) 
 {
@@ -66,8 +67,8 @@ void receive(struct zcan_frame *frame, void *arg)
 
     strncpy(work_item->message.text, &frame->data[2], sizeof(work_item->message.text));
 
-    /* Send Item to communication thread */
-    k_fifo_put(&extern_to_communication, work_item);
+    /* Send Item to validation thread */
+    k_fifo_put(&extern_to_validation, work_item);
 }
 
 /**

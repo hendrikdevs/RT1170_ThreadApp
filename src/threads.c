@@ -8,61 +8,67 @@
 
 LOG_MODULE_REGISTER(threads);
 
-/* Set up for memory management */
-struct k_mem_domain communication_domain;
-extern struct k_mem_partition c1_partition;
+/* Private headers */
+void worker_thread_entry(void*, void*, void*);
+void validation_thread_entry(void*, void*, void*);
+void validation_thread_setup(void*, void*, void*);
 
-K_APPMEM_PARTITION_DEFINE(c1_partition);
-struct k_mem_partition *communication_domain_parts[] = {
-    &c1_partition
+/* Set up for memory management */
+struct k_mem_domain validation_domain;
+extern struct k_mem_partition v1_partition;
+
+K_APPMEM_PARTITION_DEFINE(v1_partition);
+struct k_mem_partition *validation_domain_parts[] = {
+    &v1_partition
 };
 
 /* Fifo for communication between threads and ISR */
-K_FIFO_DEFINE(communication_to_worker);
-K_FIFO_DEFINE(worker_to_communication);
-K_FIFO_DEFINE(extern_to_communication);
+K_FIFO_DEFINE(validation_to_worker);
+K_FIFO_DEFINE(extern_to_validation);
 
-/* Communication thread poll events setup */
+/* Validation thread poll events setup */
 #define K_POLL_EVENT_AMOUNT 2
 #define EXTERN_MESSAGE_INCOMING 0
-#define WORKER_MESSAGE_INCOMING 1
 
 K_APP_DMEM(c1_partition) struct k_poll_event events[K_POLL_EVENT_AMOUNT] = {
     K_POLL_EVENT_STATIC_INITIALIZER(K_POLL_TYPE_FIFO_DATA_AVAILABLE,
                                     K_POLL_MODE_NOTIFY_ONLY,
-                                    &extern_to_communication, 0),
-    K_POLL_EVENT_STATIC_INITIALIZER(K_POLL_TYPE_FIFO_DATA_AVAILABLE,
-                                    K_POLL_MODE_NOTIFY_ONLY,
-                                    &worker_to_communication, 0),
+                                    &extern_to_validation, 0)
 };
 
 /* Setup Threads */
-K_THREAD_DEFINE(c1, STACKSIZE, communication_thread_setup, NULL, NULL, NULL, COMMUNICATION_THREAD_PRIORITY, 0, 0);
+K_THREAD_DEFINE(v1, STACKSIZE, validation_thread_setup, NULL, NULL, NULL, COMMUNICATION_THREAD_PRIORITY, 0, 0);
 K_THREAD_DEFINE(w1, STACKSIZE, worker_thread_entry, NULL, NULL, NULL,  WORKER_THREAD_PRIORITY, 0, 0);
 
-K_HEAP_DEFINE(usermode_heap, 512);
+K_HEAP_DEFINE(validation_heap, 512);
 K_HEAP_DEFINE(worker_heap, 512);
 
-/* Grant communication thread access to needed kernel objects */
-K_APP_DMEM(c1_partition) K_HEAP_DEFINE(message_item_heap, sizeof(FifoMessageItem_t) * 20);
+/* Grant validation thread access to needed kernel objects */
+K_APP_DMEM(v1_partition) K_HEAP_DEFINE(message_item_heap, sizeof(FifoMessageItem_t) * 20);
 // K_THREAD_ACCESS_GRANT(c1, &communication_to_worker, &worker_to_communication, &message_item_heap, &events, &extern_to_communication);
 
-
-void communication_thread_setup(void* p1, void* p2, void* p3)
+/** 
+ * @brief Setup for the validation thread before it enters usermode.
+ */
+void validation_thread_setup(void* p1, void* p2, void* p3)
 {
-    k_thread_heap_assign(c1, &usermode_heap);
-    k_thread_access_grant(c1, &communication_to_worker, &worker_to_communication, &message_item_heap, &events, &extern_to_communication);
+    k_thread_heap_assign(v1, &validation_heap);
+    k_thread_access_grant(v1, &extern_to_validation, &validation_to_worker, &message_item_heap, &events);
     
-    k_mem_domain_init(&communication_domain, ARRAY_SIZE(communication_domain_parts), communication_domain_parts);
-    k_mem_domain_add_thread(&communication_domain, c1);
+    k_mem_domain_init(&validation_domain, ARRAY_SIZE(validation_domain_parts), validation_domain_parts);
+    k_mem_domain_add_thread(&validation_domain, v1);
 
-    k_thread_user_mode_enter(communication_thread_entry, NULL, NULL, NULL);
+    k_thread_user_mode_enter(validation_thread_entry, NULL, NULL, NULL);
 }
 
-
-void communication_thread_entry(void* p1, void* p2, void* p3) 
+/**
+ * @brief The main function for a communication thread.
+ * The communication thread is running in usermode.
+ *
+ */
+void validation_thread_entry(void* p1, void* p2, void* p3) 
 {
-    LOG_INF("Communication thread started");
+    LOG_INF("Validation thread started");
 
     /* Loop, der die FIFOS checkt ob neue "Ressourcen" (/Nachrichten)
        vorhanden sind, wenn ja diese abarbeiten. */
@@ -75,7 +81,6 @@ void communication_thread_entry(void* p1, void* p2, void* p3)
          * By doing this here we can reduce the indentation level ins the IFs.
          */
         events[0].state = K_POLL_STATE_NOT_READY;
-        events[1].state = K_POLL_STATE_NOT_READY;
 
         /* "Poll" for new event */
         poll = k_poll(events, K_POLL_EVENT_AMOUNT, K_FOREVER);
@@ -84,60 +89,47 @@ void communication_thread_entry(void* p1, void* p2, void* p3)
         if(poll != 0)
             continue;
 
-        /* We got atleast one event */
-        if (events[WORKER_MESSAGE_INCOMING].state == K_POLL_STATE_FIFO_DATA_AVAILABLE)
-        {
-            LOG_INF("Received message from the worker thread");
-            work_item = k_fifo_get(&worker_to_communication, K_MSEC(100));
-            if(work_item == NULL) 
-                continue;
-
-            LOG_DBG("Was able to read work_item");
-
-            /* Send message and free it from heap */
-            work_item->send(work_item);
-            k_heap_free(&message_item_heap, work_item);
-            LOG_INF("Send Message to extern and erased item from heap");
-        }
-
         /* ISR recieved a message and put it into it FIFO */
         if(events[EXTERN_MESSAGE_INCOMING].state == K_POLL_STATE_FIFO_DATA_AVAILABLE) 
         {
             LOG_INF("Received message from ISR FIFO");
-            work_item = k_fifo_get(&extern_to_communication, K_MSEC(100));
+            work_item = k_fifo_get(&extern_to_validation, K_MSEC(100));
             if(work_item == NULL) 
                 continue;
             
             /* validate recieved message (TODO) */
 
             /* send to worker */
-            k_fifo_put(&communication_to_worker, work_item);
-            LOG_DBG("Put FifoMessageItem into communication_to_worker queue");
+            k_fifo_alloc_put(&validation_to_worker, work_item);
+            LOG_DBG("Put FifoMessageItem into validation_to_worker queue");
         }
     }
 }
 
+/**
+ * @brief The main function for a worker thread.
+ * 
+ */
 void worker_thread_entry(void* p1, void* p2, void* p3) 
 {
     LOG_INF("Worker thread started");
 
     k_thread_heap_assign(w1, &worker_heap);
-
     struct FifoMessageItem *item;
-
-    //k_thread_access_grant(c1, &communication_to_worker, &worker_to_communication);
 
     while(true) 
     {
-        /* Wait for new can message from communication thread */
-        item = k_fifo_get(&communication_to_worker, K_FOREVER);
+        /* Wait for new can message from validation thread */
+        item = k_fifo_get(&validation_to_worker, K_FOREVER);
 
         /* Process Message */
         k_msleep(item->message.sleep_in_ms);
         //reverse_in_place(item->message.text, sizeof(item->message.text));
 
-        /* Send message backwards to the communication thread */
-        k_fifo_put(&worker_to_communication, item);
+        /* Send message and free it from heap */
+        work_item->send(work_item);
+        k_heap_free(&message_item_heap, work_item);
+        LOG_INF("Send Message to extern and erased item from heap");
     }
 }
 

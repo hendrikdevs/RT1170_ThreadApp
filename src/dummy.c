@@ -14,6 +14,6 @@ void dummy_recieve_to_fifo(void) {
     struct Message msg = {0,1000,"hello"};
     fifoItem->message = msg;
 
-    k_fifo_put(&extern_to_communication, fifoItem);
+    k_fifo_put(&extern_to_validation, fifoItem);
     printk("DRVR: \"Recieved\" message and sent into fifo\n");
 }

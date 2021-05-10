@@ -11,14 +11,14 @@
 #define WORKER_THREAD_PRIORITY -2
 
 /**
- * @brief Identifier of the communication user mode thread.
- * Gets set by threads.c zephyr macro. Used for receiving and
- * sending can messages, and forwarding messages to the worker
+ * @brief Identifier of the validation user mode thread.
+ * Gets set by threads.c zephyr macro. Used for receiving
+ * messages, and forwarding messages to the worker
  * thread.
  */
-extern const k_tid_t c1;
+extern const k_tid_t v1;
 
-extern struct k_mem_partition c1_partition;
+extern struct k_mem_partition v1_partition;
 
 /**
  * @brief All incoming messages that gets created as
@@ -31,7 +31,7 @@ extern struct k_heap message_item_heap;
  * @brief Heap space for the communication (usermode) thread.
  * 
  */
-extern struct k_heap usermode_heap;
+extern struct k_heap validation_heap;
 
 /**
  * @brief Identifier of the worker kernel mode thread.
@@ -45,19 +45,13 @@ extern const k_tid_t w1;
  * @brief The identifier for the FIFO from communication to worker thread
  * 
  */
-extern struct k_fifo communication_to_worker;
+extern struct k_fifo validation_to_worker;
 
 /**
  * @brief The identifier for the FIFO from worker to communication thread
  * 
  */
-extern struct k_fifo worker_to_communication;
-
-/**
- * @brief The identifier for the FIFO from worker to communication thread
- * 
- */
-extern struct k_fifo extern_to_communication;
+extern struct k_fifo extern_to_validation;
 
 /**
  * @brief Fifo Message Item
@@ -73,22 +67,6 @@ struct FifoMessageItem
 	const struct device* dev;  /* Device which recieved the Message*/
 } __packed __aligned(4);
 typedef struct FifoMessageItem FifoMessageItem_t;
-
-/**
- * @brief The main function for a worker thread.
- * 
- */
-void worker_thread_entry(void*, void*, void*);
-
-/**
- * @brief The main function for a communication thread.
- * The communication thread is running in usermode.
- *
- */
-void communication_thread_entry(void*, void*, void*);
-
-/** @brief Setup for the Thread before it enters Usermode */
-void communication_thread_setup(void*, void*, void*);
 
 /**
  * @brief Reverses a char array in place.

@@ -33,7 +33,7 @@ static void recieve_to_fifo(const struct device* dev, void* user_data) {
 			fifoItem.dev = dev;
 			fifoItem.message = rx_data.message;
 			fifoItem.send = send_over_uart;
-			k_fifo_put(&extern_to_communication, &fifoItem);
+			k_fifo_put(&extern_to_validation, &fifoItem);
 
 		}
 	}

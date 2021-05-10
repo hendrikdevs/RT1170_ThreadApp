@@ -4,7 +4,8 @@ menu "Project specific options"
     
 config USE_CAN
     bool "Enable the CAN handlers, Note that this option currently does not work with CONFIG_USERSPACE"
-    depends on CAN=y && USERSPACE=n
+    depends on USERSPACE=n
+    select CAN
 
 
 config USE_USB

@@ -8,7 +8,9 @@ void dummy_send_out(FifoMessageItem_t* fifoItem) {
 }
 
 void dummy_recieve_to_fifo(void) {
-    FifoMessageItem_t* fifoItem = k_heap_alloc(&message_item_heap, sizeof(FifoMessageItem_t), K_NO_WAIT);
+    FifoMessageItem_t* fifoItem = createFifoMessageItem(
+        
+    )
     fifoItem->dev = NULL;
     fifoItem->send = dummy_send_out;
     struct Message msg = {0,1000,"hello"};

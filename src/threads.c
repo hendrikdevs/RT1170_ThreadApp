@@ -150,3 +150,12 @@ void reverse_in_place(char* text, const size_t length)
 
     return;
 }
+
+FifoMessageItem_t* createFifoMessageItem(message_t msg, void (*cc)(struct FifoMessageItem*), struct device* dev) {
+    FifoMessageItem_t* fifoItem = k_heap_alloc(&message_item_heap, sizeof(FifoMessageItem_t), K_NO_WAIT);
+    fifoItem->dev = dev;
+    fifoItem->send = cc;
+    fifoItem->message = msg;
+
+    return fifoItem;
+}

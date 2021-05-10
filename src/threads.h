@@ -69,7 +69,16 @@ struct FifoMessageItem
 typedef struct FifoMessageItem FifoMessageItem_t;
 
 /**
- * @brief Reverses a char array in place.
+ * @brief Create a Fifo Message Item object
+ * 
+ * @param msg The message item
+ * @param cc The callback function which sends out the response
+ * @param dev The device which recieved the message item
+ */
+FifoMessageItem_t* createFifoMessageItem(message_t msg, void (*cc)(struct FifoMessageItem*), struct device* dev);
+
+/**
+ * @brief 
  * 
  * @param text The pointer to the char array.
  * @param length The length of the char array.

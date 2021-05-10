@@ -127,8 +127,8 @@ void worker_thread_entry(void* p1, void* p2, void* p3)
         //reverse_in_place(item->message.text, sizeof(item->message.text));
 
         /* Send message and free it from heap */
-        work_item->send(work_item);
-        k_heap_free(&message_item_heap, work_item);
+        item->send(item);
+        k_heap_free(&message_item_heap, item);
         LOG_INF("Send Message to extern and erased item from heap");
     }
 }

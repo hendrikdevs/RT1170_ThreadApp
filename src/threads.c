@@ -30,7 +30,7 @@ K_FIFO_DEFINE(extern_to_validation);
 #define K_POLL_EVENT_AMOUNT 2
 #define EXTERN_MESSAGE_INCOMING 0
 
-K_APP_DMEM(c1_partition) struct k_poll_event events[K_POLL_EVENT_AMOUNT] = {
+K_APP_DMEM(v1_partition) struct k_poll_event events[K_POLL_EVENT_AMOUNT] = {
     K_POLL_EVENT_STATIC_INITIALIZER(K_POLL_TYPE_FIFO_DATA_AVAILABLE,
                                     K_POLL_MODE_NOTIFY_ONLY,
                                     &extern_to_validation, 0)

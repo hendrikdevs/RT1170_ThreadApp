@@ -75,7 +75,7 @@ typedef struct FifoMessageItem FifoMessageItem_t;
  * @param cc The callback function which sends out the response
  * @param dev The device which recieved the message item
  */
-FifoMessageItem_t* createFifoMessageItem(message_t msg, void (*cc)(struct FifoMessageItem*), struct device* dev);
+FifoMessageItem_t* createFifoMessageItem(message_t msg, void (*cc)(struct FifoMessageItem*), const struct device* dev);
 
 /**
  * @brief 

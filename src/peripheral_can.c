@@ -56,16 +56,11 @@ void receive(struct zcan_frame *frame, void *arg)
 {
     LOG_INF("CAN message received");
 
-    /* Reserve Space for FifoMessageItem on special heap for it */
-    FifoMessageItem_t* work_item = k_heap_alloc(&message_item_heap, sizeof(FifoMessageItem_t), K_NO_WAIT);
-
-    /* Set Item Values based on received can values */
-    work_item->dev = can_dev;
-    work_item->send = send;
-    work_item->message.priority = frame->data[0];
-    work_item->message.sleep_in_ms = frame->data[1];
-
-    strncpy(work_item->message.text, &frame->data[2], sizeof(work_item->message.text));
+    message_t msg = {frame->data[0], frame->data[1], ""};
+    strncpy(msg.text, &frame->data[2], sizeof(msg.text));
+    FifoMessageItem_t* work_item = createFifoMessageItem(
+        msg, send, can_dev
+    );
 
     /* Send Item to validation thread */
     k_fifo_put(&extern_to_validation, work_item);

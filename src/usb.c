@@ -29,10 +29,9 @@ static void recieve_to_fifo(const struct device* dev, void* user_data) {
 			recv_len = uart_fifo_read(dev, rx_data.buffer, sizeof(rx_data.buffer));
 
 			/* put into kernel fifo */
-			struct FifoMessageItem fifoItem;
-			fifoItem.dev = dev;
-			fifoItem.message = rx_data.message;
-			fifoItem.send = send_over_uart;
+			FifoMessageItem_t* fifoItem = createFifoMessageItem(
+				rx_data.message, send_over_uart, dev
+			);
 			k_fifo_put(&extern_to_validation, &fifoItem);
 
 		}

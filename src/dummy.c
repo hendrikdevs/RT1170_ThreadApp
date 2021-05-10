@@ -8,13 +8,10 @@ void dummy_send_out(FifoMessageItem_t* fifoItem) {
 }
 
 void dummy_recieve_to_fifo(void) {
-    FifoMessageItem_t* fifoItem = createFifoMessageItem(
-        
-    )
-    fifoItem->dev = NULL;
-    fifoItem->send = dummy_send_out;
     struct Message msg = {0,1000,"hello"};
-    fifoItem->message = msg;
+    FifoMessageItem_t* fifoItem = createFifoMessageItem(
+        msg, dummy_send_out, NULL
+    );
 
     k_fifo_put(&extern_to_validation, fifoItem);
     printk("DRVR: \"Recieved\" message and sent into fifo\n");

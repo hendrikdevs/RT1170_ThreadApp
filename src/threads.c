@@ -62,8 +62,8 @@ void validation_thread_setup(void* p1, void* p2, void* p3)
 }
 
 /**
- * @brief The main function for a communication thread.
- * The communication thread is running in usermode.
+ * @brief The main function for a validation thread.
+ * The validation thread is running in usermode.
  *
  */
 void validation_thread_entry(void* p1, void* p2, void* p3) 

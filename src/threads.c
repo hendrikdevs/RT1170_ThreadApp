@@ -45,7 +45,7 @@ K_HEAP_DEFINE(worker_heap, 512);
 
 /* Grant validation thread access to needed kernel objects */
 K_APP_DMEM(v1_partition) K_HEAP_DEFINE(message_item_heap, sizeof(FifoMessageItem_t) * 20);
-// K_THREAD_ACCESS_GRANT(c1, &communication_to_worker, &worker_to_communication, &message_item_heap, &events, &extern_to_communication);
+K_THREAD_ACCESS_GRANT(v1, &extern_to_validation, &validation_to_worker, &message_item_heap, &events);
 
 /** 
  * @brief Setup for the validation thread before it enters usermode.
@@ -53,7 +53,6 @@ K_APP_DMEM(v1_partition) K_HEAP_DEFINE(message_item_heap, sizeof(FifoMessageItem
 void validation_thread_setup(void* p1, void* p2, void* p3)
 {
     k_thread_heap_assign(v1, &validation_heap);
-    k_thread_access_grant(v1, &extern_to_validation, &validation_to_worker, &message_item_heap, &events);
     
     k_mem_domain_init(&validation_domain, ARRAY_SIZE(validation_domain_parts), validation_domain_parts);
     k_mem_domain_add_thread(&validation_domain, v1);

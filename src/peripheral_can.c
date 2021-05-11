@@ -85,9 +85,12 @@ void send(FifoMessageItem_t *item)
     ret = can_send(item->dev, &send_frame, K_MSEC(100), NULL, NULL);
 
     /* Log message status */
-    if (ret != CAN_TX_OK) {
+    if (ret != CAN_TX_OK) 
+    {
         LOG_ERR("CAN sending failed [%d]", ret);
     }
-
+    else 
+    {
     LOG_INF("CAN send success");
+}
 }

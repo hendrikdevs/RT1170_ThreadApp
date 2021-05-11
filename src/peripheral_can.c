@@ -32,6 +32,9 @@ int init_can(void)
         return CAN_UNITIALIZED;
     }
 
+    if(can_set_bitrate(can_dev, 125000, NULL) != 0)
+        LOG_ERR("Not able to set CAN Bitrate");
+
     /* Attach ISR to can device */
     filter_id = can_attach_isr(can_dev, receive, NULL, &can_standard_filter);
     

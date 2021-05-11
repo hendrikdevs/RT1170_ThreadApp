@@ -2,17 +2,21 @@
 #include "threads.h"
 #include "message/message.h"
 #include "dummy.h"
+#include <logging/log.h>
+
+LOG_MODULE_REGISTER(dummy);
 
 void dummy_send_out(FifoMessageItem_t* fifoItem) {
-    printk("DRVR: Sent out message: %s\n", fifoItem->message.text);
+    LOG_INF("DRVR: Sent out message: %s", log_strdup(fifoItem->message.text));
 }
 
 void dummy_recieve_to_fifo(void) {
-    struct Message msg = {0,1000,"hello"};
+
+    char text[10] = "helloworld";
     FifoMessageItem_t* fifoItem = createFifoMessageItem(
-        msg, dummy_send_out, NULL
+        0, 1000, text, dummy_send_out, NULL
     );
 
     k_fifo_put(&extern_to_validation, fifoItem);
-    printk("DRVR: \"Recieved\" message and sent into fifo\n");
+    LOG_INF("DRVR: \"Recieved\" message and sent into fifo");
 }

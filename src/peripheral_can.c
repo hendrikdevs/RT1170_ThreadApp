@@ -94,6 +94,6 @@ void send(FifoMessageItem_t *item)
     }
     else 
     {
-    LOG_INF("CAN send success");
-}
+        LOG_INF("CAN send success");
+    }
 }

@@ -56,10 +56,8 @@ void receive(struct zcan_frame *frame, void *arg)
 {
     LOG_INF("CAN message received");
 
-    message_t msg = {frame->data[0], frame->data[1], ""};
-    strncpy(msg.text, &frame->data[2], sizeof(msg.text));
     FifoMessageItem_t* work_item = createFifoMessageItem(
-        msg, send, can_dev
+        frame->data[0], frame->data[1], &frame->data[2], send, can_dev
     );
 
     /* Send Item to validation thread */

@@ -14,6 +14,7 @@ void validation_thread_entry(void*, void*, void*);
 void validation_thread_setup(void*, void*, void*);
 
 /* Set up for memory management */
+#ifdef CONFIG_USERSPACE
 struct k_mem_domain validation_domain;
 extern struct k_mem_partition v1_partition;
 
@@ -21,6 +22,7 @@ K_APPMEM_PARTITION_DEFINE(v1_partition);
 struct k_mem_partition *validation_domain_parts[] = {
     &v1_partition
 };
+#endif
 
 /* Fifo for communication between threads and ISR */
 K_FIFO_DEFINE(validation_to_worker);
@@ -53,9 +55,10 @@ K_THREAD_ACCESS_GRANT(v1, &extern_to_validation, &validation_to_worker, &message
 void validation_thread_setup(void* p1, void* p2, void* p3)
 {
     k_thread_heap_assign(v1, &validation_heap);
-    
+    #ifdef CONFIG_USERSPACE
     k_mem_domain_init(&validation_domain, ARRAY_SIZE(validation_domain_parts), validation_domain_parts);
     k_mem_domain_add_thread(&validation_domain, v1);
+    #endif
 
     k_thread_user_mode_enter(validation_thread_entry, NULL, NULL, NULL);
 }
@@ -96,7 +99,12 @@ void validation_thread_entry(void* p1, void* p2, void* p3)
             if(work_item == NULL) 
                 continue;
             
-            /* validate recieved message (TODO) */
+            /* validate recieved message */
+            if(work_item->message.sleep_in_ms > MESSAGE_MAX_SLEEP){
+                LOG_ERR("Sleep_in_ms too long: %d", work_item->message.sleep_in_ms);
+                work_item->message.sleep_in_ms = MESSAGE_MAX_SLEEP;
+            }
+
 
             /* send to worker */
             k_fifo_alloc_put(&validation_to_worker, work_item);
@@ -123,7 +131,7 @@ void worker_thread_entry(void* p1, void* p2, void* p3)
 
         /* Process Message */
         k_msleep(item->message.sleep_in_ms);
-        //reverse_in_place(item->message.text, sizeof(item->message.text));
+        reverse_in_place(item->message.text, sizeof(item->message.text));
 
         /* Send message and free it from heap */
         item->send(item);
@@ -132,15 +140,19 @@ void worker_thread_entry(void* p1, void* p2, void* p3)
     }
 }
 
-void reverse_in_place(char* text, const size_t length) 
+void reverse_in_place(char* text, size_t length) 
 {
-    /* Counters */
-    int i;
+    /* find real length */
+    for(int i = 0; i < length; i++){
+        if(text[i] == '\0'){
+            length = i;
+        }
+    }
+
     int len = length - 1;
-
     char tmp;
-
-    for (i = 0; i < length / 2; i++) 
+    /* Swap characters */
+    for (int i = 0; i < length / 2; i++) 
     {
         tmp = text[i];
         text[i] = text[len];
@@ -150,11 +162,16 @@ void reverse_in_place(char* text, const size_t length)
     return;
 }
 
-FifoMessageItem_t* createFifoMessageItem(message_t msg, void (*cc)(struct FifoMessageItem*), const struct device* dev) {
+FifoMessageItem_t* createFifoMessageItem(
+    int priority, int timeout, char* msg, 
+    void (*cc)(struct FifoMessageItem*), const struct device* dev
+) {
     FifoMessageItem_t* fifoItem = k_heap_alloc(&message_item_heap, sizeof(FifoMessageItem_t), K_NO_WAIT);
     fifoItem->dev = dev;
     fifoItem->send = cc;
-    fifoItem->message = msg;
+    fifoItem->message.priority = priority;
+    fifoItem->message.sleep_in_ms = timeout;
+    strncpy(fifoItem->message.text, msg, sizeof(fifoItem->message.text));
 
     return fifoItem;
 }

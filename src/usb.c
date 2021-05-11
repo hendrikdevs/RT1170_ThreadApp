@@ -30,7 +30,10 @@ static void recieve_to_fifo(const struct device* dev, void* user_data) {
 
 			/* put into kernel fifo */
 			FifoMessageItem_t* fifoItem = createFifoMessageItem(
-				rx_data.message, send_over_uart, dev
+				rx_data.message.priority,
+				rx_data.message.sleep_in_ms,
+				rx_data.message.text,
+				send_over_uart, dev
 			);
 			k_fifo_put(&extern_to_validation, &fifoItem);
 

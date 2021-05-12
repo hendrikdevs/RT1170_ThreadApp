@@ -135,6 +135,7 @@ void worker_thread_entry(void* p1, void* p2, void* p3)
 
         /* Send message and free it from heap */
         item->send(item);
+        LOG_DBG("Sent item: {%d, %d, %s}", item->message.priority, item->message.sleep_in_ms, log_strdup(item->message.text));
         k_heap_free(&message_item_heap, item);
         LOG_INF("Send Message to extern and erased item from heap");
     }

@@ -9,12 +9,13 @@
 
 #include <usb/usb_device.h>
 #include <logging/log.h>
-LOG_MODULE_REGISTER(cdc_acm_echo, LOG_LEVEL_INF);
+LOG_MODULE_REGISTER(cdc_acm_echo);
 
 void send_over_uart(FifoMessageItem_t* fifoItem) {
 	union Serialized_Message tx_data;
 	tx_data.message = fifoItem->message;
-	uart_tx(fifoItem->dev, tx_data.buffer, sizeof(tx_data.buffer), 1000);
+	int ret = uart_tx(fifoItem->dev, tx_data.buffer, sizeof(tx_data.buffer), 1000);
+	LOG_DBG("uart_tx returned: %d", ret);
 }
 
 static void recieve_to_fifo(const struct device* dev, void* user_data) {
@@ -35,7 +36,7 @@ static void recieve_to_fifo(const struct device* dev, void* user_data) {
 				rx_data.message.text,
 				send_over_uart, dev
 			);
-			k_fifo_put(&extern_to_validation, &fifoItem);
+			k_fifo_put(&extern_to_validation, fifoItem);
 
 		}
 	}

@@ -1,13 +1,14 @@
 # ThreadApp
 
-- User Thread
-	- CAN / Ethernet Kommunikation?
-- Kernel Thread
-	- Auswertung der CAN Nachricht
-	- Austausch mit User Mode Thread, der dann Antwort sendet
+Applikation zum testen der Interprozesskommunikation sowie Multithreading unter Zephyr. 
+
+- Validation Thread (v1) im Usermode
+	- Empfängt Nachrichten von den Gerätetreibern via extern_to_validation FIFO
+	- "Validieren" der Nachricht
+	- packt Nachricht in FIFO zum Worker Thread
+
+- Worker Thread (w1) im Kernelmode
+	- Empfängt die Nachricht aus der validation_to_worker FIFO
+	- wertet die Nachricht aus
+	- zurücksenden der bearbeiteten Nachricht an den Gerätetreiber via Callback
 	
-- Austausch per FIFO?
-	- Nachrichten können Priorisiert sein
-	- Pro Priorität eine FIFO vom kleinen CPU zum großen
-	- Eine FIFO Queue für alle Nachrichten vom großen CPU zum kleinen
-	- Interrupt wenn CAN Nachricht kommt & wenn Item in FIFO Queue (vom großen CPU zum kleinen) liegt, sonst in sleep Modus gehen
